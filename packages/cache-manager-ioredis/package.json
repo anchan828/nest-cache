@@ -1,0 +1,46 @@
+{
+  "name": "@anchan828/nest-cache-manager-ioredis",
+  "version": "0.11.12",
+  "description": "",
+  "homepage": "https://github.com/anchan828/nest-cache#readme",
+  "bugs": {
+    "url": "https://github.com/anchan828/nest-cache/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anchan828/nest-cache.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "author": "anchan828 <anchan828@gmail.com>",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "copy:license": "cp ../../LICENSE ./",
+    "lint": "TIMING=1 eslint --ignore-path ../../.eslintignore '**/*.ts'",
+    "lint:fix": "npm run lint -- --fix",
+    "prepublishOnly": "npm run copy:license",
+    "test": "jest --coverage --runInBand --detectOpenHandles",
+    "test:debug": "node --inspect-brk ../../node_modules/jest/bin/jest --runInBand --logHeapUsage",
+    "test:watch": "npm run test -- --watch",
+    "watch": "tsc --watch"
+  },
+  "dependencies": {
+    "@anchan828/nest-cache-common": "^0.11.12",
+    "cache-manager": "4.0.1",
+    "ioredis": "5.0.6",
+    "lru-cache": "7.10.1"
+  },
+  "devDependencies": {
+    "@nestjs/common": "8.4.6",
+    "@types/cache-manager": "3.4.3",
+    "rxjs": "7.5.5"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^8.0.0",
+    "lru-cache": "^7.0.0"
+  }
+}
