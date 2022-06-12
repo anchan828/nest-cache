@@ -7,7 +7,11 @@ import { CacheEventEmitter } from "./cache.emitter";
 import { CacheService } from "./cache.service";
 import { CACHE_MODULE_OPTIONS } from "./constants";
 
-describe.each(["memory", "redis"])("store: %s", (storeName: string) => {
+describe.each([
+  { storeName: "memory" },
+  { storeName: "redis", port: 6379 },
+  { storeName: "redis(dragonfly)", port: 6380 },
+])("store: $storeName", ({ storeName, port }) => {
   describe.each(["", "v1", "next", "dev"])("CacheService version: %s", (version: string) => {
     let service: CacheService;
     beforeEach(async () => {
@@ -21,12 +25,13 @@ describe.each(["memory", "redis"])("store: %s", (storeName: string) => {
               storeName === "memory"
                 ? caching({
                     store: "memory",
-                    ttl: 1000,
+                    ttl: 5,
                     maxSize: 500,
                     sizeCalculation: () => 1,
                   })
                 : caching({
                     store: redisStore,
+                    port,
                     host: process.env.REDIS_HOST || "localhost",
                     ttl: 5,
                   } as any),
@@ -43,7 +48,7 @@ describe.each(["memory", "redis"])("store: %s", (storeName: string) => {
     });
 
     afterEach(async () => {
-      if (storeName === "redis") {
+      if (storeName.includes("redis")) {
         await service?.["cacheManager"]?.["store"]?.["redisCache"]?.flushdb();
         await service?.["cacheManager"]?.["store"]?.close();
       }

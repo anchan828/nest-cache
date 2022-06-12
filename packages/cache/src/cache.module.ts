@@ -6,7 +6,7 @@ import {
   Global,
   Inject,
   Module,
-  OnApplicationShutdown,
+  OnModuleDestroy,
   OnModuleInit,
   Provider,
   Type,
@@ -25,7 +25,7 @@ import { CACHE_MODULE_OPTIONS } from "./constants";
  */
 @Global()
 @Module({})
-export class CacheModule implements OnModuleInit, OnApplicationShutdown {
+export class CacheModule implements OnModuleInit, OnModuleDestroy {
   private pubsubServices: CachePubSubService[] = [];
 
   constructor(
@@ -48,7 +48,7 @@ export class CacheModule implements OnModuleInit, OnApplicationShutdown {
     }
   }
 
-  async onApplicationShutdown(): Promise<void> {
+  async onModuleDestroy(): Promise<void> {
     for (const pubsubService of this.pubsubServices) {
       await pubsubService.close();
     }
