@@ -42,5 +42,8 @@
   "peerDependencies": {
     "@nestjs/common": "^8.0.0",
     "lru-cache": "^7.0.0"
+  },
+  "volta": {
+    "extends": "../../package.json"
   }
 }
