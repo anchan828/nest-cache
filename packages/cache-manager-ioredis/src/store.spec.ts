@@ -4,7 +4,10 @@ import Redis from "ioredis";
 import { setTimeout } from "timers/promises";
 import { RedisStore, redisStore } from "./store";
 import { RedisStoreArgs } from "./store.interface";
-describe("RedisStore", () => {
+describe.each([
+  { name: "redis", port: 6379 },
+  { name: "dragonfly", port: 6380 },
+])("RedisStore: $name", ({ port }) => {
   let store: CacheManager;
   let redis: RedisStore;
   let store2: CacheManager;
@@ -13,6 +16,7 @@ describe("RedisStore", () => {
     store = caching({
       store: redisStore,
       host: process.env.REDIS_HOST || "localhost",
+      port,
       db: 1,
       ttl: 5,
     } as any) as any as CacheManager;
@@ -21,6 +25,7 @@ describe("RedisStore", () => {
     store2 = caching({
       store: redisStore,
       host: process.env.REDIS_HOST || "localhost",
+      port,
       db: 2,
       ttl: 5,
     } as any) as any as CacheManager;
@@ -38,28 +43,6 @@ describe("RedisStore", () => {
 
   it("create cache instance", () => {
     expect(store).toBeDefined();
-  });
-
-  it("should set cache - watch", async () => {
-    const key = "test";
-    await redis["redisCache"].watch(key);
-    await store2.set(key, { id: 2 });
-
-    await store.set(key, {
-      id: 1,
-      name: "Name",
-      nest: {
-        id: 10,
-      },
-    });
-
-    await expect(store.get(key)).resolves.toEqual({
-      id: 1,
-      name: "Name",
-      nest: {
-        id: 10,
-      },
-    });
   });
 
   it("should set cache", async () => {
@@ -193,7 +176,10 @@ describe("RedisStore", () => {
   });
 });
 
-describe("In-memory cache", () => {
+describe.each([
+  { name: "redis", port: 6379 },
+  { name: "dragonfly", port: 6380 },
+])("In-memory cache: $name", ({ port }) => {
   let store: CacheManager;
   let redis: RedisStore;
   let hitCacheFn: jest.Mock<any, any>;
@@ -205,6 +191,7 @@ describe("In-memory cache", () => {
       store: redisStore as any,
       host: process.env.REDIS_HOST || "localhost",
       ttl: 5,
+      port,
       db: 4,
       inMemory: {
         enabled: true,
