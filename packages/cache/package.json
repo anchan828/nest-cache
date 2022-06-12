@@ -1,6 +1,6 @@
 {
   "name": "@anchan828/nest-cache",
-  "version": "0.11.13",
+  "version": "0.11.14",
   "description": "",
   "homepage": "https://github.com/anchan828/nest-cache#readme",
   "bugs": {
@@ -30,12 +30,12 @@
     "watch": "tsc --watch"
   },
   "dependencies": {
-    "@anchan828/nest-cache-common": "^0.11.13",
+    "@anchan828/nest-cache-common": "^0.11.14",
     "cache-manager": "4.0.1",
     "typed-emitter": "2.1.0"
   },
   "devDependencies": {
-    "@anchan828/nest-cache-manager-ioredis": "^0.11.13",
+    "@anchan828/nest-cache-manager-ioredis": "^0.11.14",
     "@nestjs/common": "8.4.6",
     "@nestjs/config": "2.1.0",
     "@types/cache-manager": "4.0.0",
