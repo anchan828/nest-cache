@@ -31,8 +31,7 @@
   "dependencies": {
     "@anchan828/nest-cache-common": "^0.11.14",
     "cache-manager": "4.0.1",
-    "ioredis": "5.0.6",
-    "lru-cache": "7.10.1"
+    "ioredis": "5.0.6"
   },
   "devDependencies": {
     "@nestjs/common": "8.4.7",
@@ -40,8 +39,7 @@
     "rxjs": "7.5.5"
   },
   "peerDependencies": {
-    "@nestjs/common": "^8.0.0",
-    "lru-cache": "^7.0.0"
+    "@nestjs/common": "^8.0.0"
   },
   "volta": {
     "extends": "../../package.json"
