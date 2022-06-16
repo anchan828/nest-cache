@@ -1,7 +1,6 @@
 /* eslint-disable prefer-rest-params */
 import {
   CacheManager,
-  CacheManagerGetOptions,
   CacheManagerSetOptions,
   chunk,
   isNullOrUndefined,
@@ -9,33 +8,20 @@ import {
 } from "@anchan828/nest-cache-common";
 import { CacheStore, CacheStoreFactory, LiteralObject } from "@nestjs/common";
 import Redis from "ioredis";
+import { AsyncLocalStorageService } from "./async-local-storage.service";
 import { CACHE_STORE_NAME } from "./constants";
-import { InMemoryCacheService } from "./in-memory-cache.service";
 import { CallbackDecorator, DelCallbackDecorator } from "./store.decorator";
 import { RedisStoreArgs } from "./store.interface";
+
 export class RedisStore implements CacheManager {
   private readonly redisCache: Redis;
 
   public readonly name: string = CACHE_STORE_NAME;
 
-  private readonly memoryCache?: InMemoryCacheService;
-
-  private readonly memoryCacheIntervalId?: NodeJS.Timeout;
+  private readonly asyncLocalStorage: AsyncLocalStorageService;
 
   constructor(private readonly args: RedisStoreArgs) {
-    if (args.inMemory?.enabled) {
-      this.memoryCache = new InMemoryCacheService({
-        max: args.inMemory?.max ?? Math.pow(2, 16),
-        maxSize: args.inMemory?.max ?? Math.pow(2, 16),
-        ttl: (args.inMemory?.ttl ?? 5) * 1000,
-        sizeCalculation: () => 1,
-      });
-
-      this.memoryCacheIntervalId = setInterval(
-        () => this.memoryCache?.purgeStale(),
-        args.inMemory?.pruneInterval || 1000 * 10,
-      );
-    }
+    this.asyncLocalStorage = new AsyncLocalStorageService(args.asyncLocalStorage);
     this.redisCache = new Redis(args);
   }
 
@@ -65,38 +51,19 @@ export class RedisStore implements CacheManager {
       this.redisCache.set(key, json);
     }
 
+    this.asyncLocalStorage.set(key, value);
     await this.args.hooks?.set?.(key, json, ttl);
-
-    const inMemoryTTL = options?.inMmeoryTTL ?? ttl;
-
-    if (this.memoryCache && inMemoryTTL !== 0) {
-      const cachedValue = this.memoryCache.set(key, value, { ttl: this.getImMemoryTTL(ttl) });
-      await this.args.inMemory?.hooks?.set?.(key, cachedValue, ttl);
-    }
   }
 
   @CallbackDecorator()
-  public async get<T>(key: string, options?: CacheManagerGetOptions): Promise<T | undefined> {
+  public async get<T>(key: string): Promise<T | undefined> {
     if (typeof key !== "string") {
       return;
     }
 
-    let result: T | null | undefined;
-
-    let redisTTL = -2;
-
-    if (this.memoryCache && options?.inMmeoryTTL !== 0) {
-      redisTTL = await this.redisCache.ttl(key);
-    }
-
-    if (this.memoryCache && options?.inMmeoryTTL !== 0) {
-      if (redisTTL !== -2) {
-        result = this.memoryCache.get(key);
-      }
-    }
+    let result: T | null | undefined = this.asyncLocalStorage.get<T>(key);
 
     if (!isNullOrUndefined(result)) {
-      await this.args.inMemory?.hooks?.hit?.(key);
       return result;
     }
 
@@ -108,29 +75,17 @@ export class RedisStore implements CacheManager {
 
     result = parseJSON<T>(rawResult);
 
-    if (this.memoryCache && options?.inMmeoryTTL !== 0) {
-      if (redisTTL !== -2) {
-        const cachedValue = this.memoryCache.set(key, result, { ttl: this.getImMemoryTTL(redisTTL) });
-        await this.args.inMemory?.hooks?.set?.(key, cachedValue, redisTTL);
-      }
-    }
+    this.asyncLocalStorage.set(key, result);
     await this.args.hooks?.hit?.(key);
     return result;
   }
 
   @DelCallbackDecorator()
   public async del(...keys: string[]): Promise<void> {
-    if (this.memoryCache) {
-      for (const key of keys) {
-        if (this.memoryCache?.delete(key)) {
-          await this.args.inMemory?.hooks?.delete?.(key);
-        }
-      }
-    }
-
     for (const deleteKeys of chunk(keys, 2000)) {
       await this.redisCache.del(...deleteKeys);
       for (const key of deleteKeys) {
+        this.asyncLocalStorage.delete(key);
         await this.args.hooks?.delete?.(key);
       }
     }
@@ -152,9 +107,7 @@ export class RedisStore implements CacheManager {
 
   @DelCallbackDecorator()
   public async reset(): Promise<void> {
-    if (this.memoryCache) {
-      this.memoryCache.clear();
-    }
+    this.asyncLocalStorage.clear();
     const keys = await this.keys();
     if (keys.length !== 0) {
       await this.del(...keys.map((key) => key.replace(new RegExp(`^${this.args.keyPrefix}`), "")));
@@ -162,13 +115,8 @@ export class RedisStore implements CacheManager {
   }
 
   @CallbackDecorator()
-  public async mget<T>(
-    ...keysOrOptions: string[] | [...string[], CacheManagerGetOptions | undefined]
-  ): Promise<Array<T | undefined>> {
+  public async mget<T>(...keysOrOptions: string[]): Promise<Array<T | undefined>> {
     const keys = keysOrOptions.filter((x): x is string => typeof x === "string") as string[];
-    const options = keysOrOptions.find((x): x is CacheManagerGetOptions => typeof x === "object") as
-      | CacheManagerGetOptions
-      | undefined;
 
     const map = new Map<string, T | undefined>(keys.map((key) => [key, undefined]));
 
@@ -177,15 +125,9 @@ export class RedisStore implements CacheManager {
         continue;
       }
 
-      if (this.memoryCache && options?.inMmeoryTTL !== 0) {
-        const existsKey = await this.redisCache.exists(key);
-        if (existsKey) {
-          const result = this.memoryCache.get<T>(key);
-          if (!isNullOrUndefined(result)) {
-            map.set(key, result);
-            await this.args.inMemory?.hooks?.hit?.(key);
-          }
-        }
+      const result = this.asyncLocalStorage.get(key);
+      if (!isNullOrUndefined(result)) {
+        map.set(key, result);
       }
     }
 
@@ -206,13 +148,7 @@ export class RedisStore implements CacheManager {
 
           await this.args.hooks?.hit?.(key);
 
-          if (this.memoryCache && options?.inMmeoryTTL !== 0) {
-            const ttl = await this.redisCache.ttl(key);
-            if (ttl !== 0) {
-              const cachedValue = this.memoryCache.set(key, value, { ttl: this.getImMemoryTTL(ttl) });
-              await this.args.inMemory?.hooks?.set?.(key, cachedValue, ttl);
-            }
-          }
+          this.asyncLocalStorage.set(key, value);
         }
       }
     }
@@ -261,37 +197,18 @@ export class RedisStore implements CacheManager {
 
         await this.args.hooks?.set?.(key, json, ttl);
 
-        const inMemoryTTL = options?.inMmeoryTTL ?? ttl;
-
-        if (this.memoryCache && inMemoryTTL !== 0) {
-          const cachedValue = this.memoryCache.set(key, value, { ttl: this.getImMemoryTTL(ttl) });
-          await this.args.inMemory?.hooks?.set?.(key, cachedValue, ttl);
-        }
+        this.asyncLocalStorage.set(key, value);
       }
     }
   }
 
   public async close(): Promise<void> {
     await this.redisCache.quit();
-    if (this.args.inMemory?.enabled) {
-      this.memoryCache?.clear();
-      if (this.memoryCacheIntervalId) {
-        clearInterval(this.memoryCacheIntervalId);
-      }
-    }
+    this.asyncLocalStorage.clear();
   }
 
   private isObject(value: any): value is Object {
     return value instanceof Object && value.constructor === Object;
-  }
-
-  private getImMemoryTTL(redisTTL?: number): number {
-    if (redisTTL === -1) {
-      redisTTL = Number.MAX_SAFE_INTEGER;
-    }
-
-    const ttl = Math.max(0, redisTTL || 0);
-    return Math.min(ttl, this.args.inMemory?.ttl || 5) * 1000;
   }
 }
 

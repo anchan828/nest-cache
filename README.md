@@ -70,36 +70,17 @@ If you set `v1` and call `CacheService.set("users/1", user)`, cache manager will
 
 You can use Redis instead of in-memory cache. Please use [@anchan828/nest-cache-manager-ioredis](https://www.npmjs.com/package/@anchan828/nest-cache-manager-ioredis)
 
-_@anchan828/nest-cache-manager-ioredis_ has the ability to cache Redis results in-memory. It is useful, for example, to use it for elements that need to be accessed frequently.
+_@anchan828/nest-cache-manager-ioredis_ has the ability to cache Redis results in AsyncLocalStorage. This is useful for elements that need to be accessed frequently.
 
 ```ts
 import { redisStore } from "@anchan828/nest-cache-manager-ioredis";
-
+const asyncLocalStorage = new AsyncLocalStorage<Map<string, any>>();
 @Module({
   imports: [
     CacheModule.register({
       store: redisStore,
       host: "localhost",
-      inMemory: {
-        enabled: true, // default: false
-        ttl: 5, // default: 5 seconds
-      },
-    }),
-  ],
-})
-export class AppModule {}
-```
-
-## Using Pub/Sub
-
-You can use Pub/Sub pattern of Redis. This works well when it is a combination of in-memory cache and multiple instances.
-A message will be sent to all instances when the cache is explicitly **deleted**.
-
-```ts
-@Module({
-  imports: [
-    CacheModule.register({
-      pubsub: { host: "localhost" },
+      asyncLocalStorage,
     }),
   ],
 })

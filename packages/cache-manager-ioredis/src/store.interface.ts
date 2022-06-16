@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "async_hooks";
 import { RedisOptions } from "ioredis";
 export interface RedisStoreArgs extends RedisOptions {
   /**
@@ -8,27 +9,13 @@ export interface RedisStoreArgs extends RedisOptions {
    */
   ttl?: number;
 
-  inMemory?: {
-    enabled?: boolean;
-    ttl?: number;
-    pruneInterval?: number;
-    max?: number;
-
-    hooks?: {
-      /**
-       * Called when the in-memory cache is hit.
-       */
-      hit?: (key: string) => void | Promise<void>;
-      /**
-       * Called when a cache is saved to the in-memory.
-       */
-      set?: (key: string, value: any, ttl?: number) => void | Promise<void>;
-      /**
-       * Called when a cache is deleted from the in-memory.
-       */
-      delete?: (key: string) => void | Promise<void>;
-    };
-  };
+  /**
+   * If you use AsyncLocalStorage, set up an instance of AsyncLocalStorage.
+   *
+   * @type {AsyncLocalStorage<any>}
+   * @memberof RedisStoreArgs
+   */
+  asyncLocalStorage?: AsyncLocalStorage<any>;
 
   hooks?: {
     /**
