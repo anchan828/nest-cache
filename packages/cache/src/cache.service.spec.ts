@@ -3,7 +3,6 @@ import { CACHE_MANAGER } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { caching } from "cache-manager";
 import { setTimeout } from "timers/promises";
-import { CacheEventEmitter } from "./cache.emitter";
 import { CacheService } from "./cache.service";
 import { CACHE_MODULE_OPTIONS } from "./constants";
 
@@ -18,7 +17,6 @@ describe.each([
       const app = await Test.createTestingModule({
         providers: [
           CacheService,
-          CacheEventEmitter,
           {
             provide: CACHE_MANAGER,
             useValue:

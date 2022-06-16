@@ -7,12 +7,9 @@ import {
   Inject,
   Module,
   OnModuleDestroy,
-  OnModuleInit,
   Provider,
   Type,
 } from "@nestjs/common";
-import { CachePubSubService } from "./cache-pubsub.service";
-import { CacheEventEmitter } from "./cache.emitter";
 import { CacheModuleAsyncOptions, CacheModuleOptions, CacheModuleOptionsFactory } from "./cache.interface";
 import { CacheService } from "./cache.service";
 import { CACHE_MODULE_OPTIONS } from "./constants";
@@ -25,34 +22,13 @@ import { CACHE_MODULE_OPTIONS } from "./constants";
  */
 @Global()
 @Module({})
-export class CacheModule implements OnModuleInit, OnModuleDestroy {
-  private pubsubServices: CachePubSubService[] = [];
-
+export class CacheModule implements OnModuleDestroy {
   constructor(
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: CacheManager,
-    private readonly emitter: CacheEventEmitter,
-    @Inject(CACHE_MODULE_OPTIONS)
-    private readonly options: CacheModuleOptions,
   ) {}
 
-  async onModuleInit(): Promise<void> {
-    if (Array.isArray(this.options)) {
-      for (const opt of this.options) {
-        if (opt.pubsub) {
-          this.pubsubServices.push(await new CachePubSubService(this.emitter).init(opt.pubsub));
-        }
-      }
-    } else if (this.options.pubsub) {
-      this.pubsubServices.push(await new CachePubSubService(this.emitter).init(this.options.pubsub));
-    }
-  }
-
   async onModuleDestroy(): Promise<void> {
-    for (const pubsubService of this.pubsubServices) {
-      await pubsubService.close();
-    }
-    this.emitter.removeAllListeners();
     await this.cacheManager?.store?.close?.();
   }
 
@@ -70,7 +46,7 @@ export class CacheModule implements OnModuleInit, OnModuleDestroy {
     return {
       module: CacheModule,
       imports: [NestCacheModule.register((options as any) || {})],
-      providers: [...providers, CacheEventEmitter],
+      providers: [...providers],
       exports: providers,
     };
   }
@@ -88,7 +64,7 @@ export class CacheModule implements OnModuleInit, OnModuleDestroy {
     return {
       module: CacheModule,
       imports: [NestCacheModule.registerAsync(options), ...(options.imports || [])],
-      providers: [...providers, CacheEventEmitter],
+      providers: [...providers],
       exports: providers,
     };
   }

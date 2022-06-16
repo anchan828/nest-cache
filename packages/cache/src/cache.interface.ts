@@ -1,5 +1,4 @@
 import { CacheModuleOptions as NestCacheModuleOptions, ModuleMetadata, Provider, Type } from "@nestjs/common";
-import { RedisOptions } from "ioredis";
 
 export type CacheModuleOptions<T = any> = NestCacheModuleOptions &
   T & {
@@ -10,14 +9,6 @@ export type CacheModuleOptions<T = any> = NestCacheModuleOptions &
      * @memberof CacheModuleOptions
      */
     cacheVersion?: string;
-
-    /**
-     * Sends a message to all instances when the cache has been deleted.
-     * Use this when there may be multiple instances, such as Serverless with in-memory cache.
-     * @type {RedisOptions}
-     * @memberof CacheModuleOptions
-     */
-    pubsub?: RedisOptions;
   };
 
 export interface CacheModuleOptionsFactory<T = any> {
@@ -34,13 +25,4 @@ export interface CacheModuleAsyncOptions<T> extends Pick<ModuleMetadata, "import
   ) => Promise<CacheModuleOptions<T> | CacheModuleOptions<T>[]> | CacheModuleOptions<T> | CacheModuleOptions<T>[];
   inject?: any[];
   extraProviders?: Provider[];
-}
-
-export interface CachePubSubMessage<T = any> {
-  instanceId: string;
-  data: T;
-}
-
-export interface CacheDeleteOptions {
-  emitEvent: boolean;
 }

@@ -1,12 +1,5 @@
-import {
-  CacheManager,
-  CacheManagerGetOptions,
-  CacheManagerSetOptions,
-  chunk,
-  isNullOrUndefined,
-} from "@anchan828/nest-cache-common";
+import { CacheManager, CacheManagerSetOptions, chunk, isNullOrUndefined } from "@anchan828/nest-cache-common";
 import { CACHE_MANAGER, Inject, Injectable, Logger } from "@nestjs/common";
-import { CacheEventEmitter } from "./cache.emitter";
 import { CacheModuleOptions } from "./cache.interface";
 import { CACHE_MODULE, CACHE_MODULE_OPTIONS } from "./constants";
 /**
@@ -24,10 +17,7 @@ export class CacheService {
     private readonly cacheManager: CacheManager,
     @Inject(CACHE_MODULE_OPTIONS)
     private readonly options: CacheModuleOptions,
-    private readonly emitter: CacheEventEmitter,
-  ) {
-    emitter.on("delete", (keys) => this.deleteWithoutEvent(...keys));
-  }
+  ) {}
 
   /**
    * Get cache from store
@@ -36,8 +26,8 @@ export class CacheService {
    * @returns {Promise<T>}
    * @memberof CacheService
    */
-  public async get<T>(key: string, options?: CacheManagerGetOptions): Promise<T | undefined> {
-    return this.cacheManager.get<T>(key, options);
+  public async get<T>(key: string): Promise<T | undefined> {
+    return this.cacheManager.get<T>(key);
   }
 
   /**
@@ -47,16 +37,14 @@ export class CacheService {
    * @return {*}  {(Promise<(T | undefined)[]>)}
    * @memberof CacheService
    */
-  public async mget<T>(keys: string[], options?: CacheManagerGetOptions): Promise<Record<string, T | undefined>> {
+  public async mget<T>(keys: string[]): Promise<Record<string, T | undefined>> {
     if (keys.length === 0) {
       return {};
     }
 
     const result: Record<string, T | undefined> = {};
 
-    const caches = this.isMemoryStore()
-      ? await this.cacheManager.mget<T>(...keys)
-      : await this.cacheManager.mget<T>(...keys, options);
+    const caches = await this.cacheManager.mget<T>(...keys);
 
     for (let i = 0; i < keys.length; i++) {
       result[keys[i]] = caches[i];
@@ -128,7 +116,6 @@ export class CacheService {
 
     keys = Array.from(new Set(keys));
 
-    this.emitter.emit("deleted", keys);
     await this.cacheManager.del(...keys);
   }
 
@@ -173,17 +160,6 @@ export class CacheService {
   public async getEntries<T>(pattern?: string): Promise<Array<{ key: string; value: T | undefined }>> {
     const entries = await this.mget<T>(await this.getKeys(pattern));
     return Object.entries(entries).map(([key, value]) => ({ key, value }));
-  }
-
-  /**
-   * This method is internal delete method for pubsub
-   */
-  private async deleteWithoutEvent(...keys: string[]): Promise<void> {
-    if (keys.length === 0) {
-      return;
-    }
-
-    await this.cacheManager.del(...keys);
   }
 
   private isMemoryStore(): boolean {

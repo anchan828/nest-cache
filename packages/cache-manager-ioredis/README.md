@@ -25,19 +25,26 @@ caching({
 });
 ```
 
-## Use in-memory store
+## Use AsyncLocalStorage
 
-You can cache results of redis to in-memory.
+You can cache results of redis to `AsyncLocalStorage<Map<string, any>>`.
 
 ```ts
+const asyncLocalStorage = new AsyncLocalStorage<Map<string, any>>();
+
 caching({
   store: redisStore,
   host: "localhost",
-  inMemory: {
-    enabled: true, // default: false
-    ttl: 5, // default: 5 seconds
-  },
+  asyncLocalStorage: asyncLocalStorage,
 });
+
+
+...
+
+
+asyncLocalStorage.run(new Map(), ()=>{
+  ...
+})
 ```
 
 ## Notes
