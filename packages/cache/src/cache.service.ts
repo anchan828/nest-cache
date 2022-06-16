@@ -184,7 +184,6 @@ export class CacheService {
     }
 
     await this.cacheManager.del(...keys);
-    this.logger.debug(`Deleted: ${keys.join(", ")}`);
   }
 
   private isMemoryStore(): boolean {
