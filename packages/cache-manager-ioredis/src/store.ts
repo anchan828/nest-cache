@@ -39,20 +39,14 @@ export class RedisStore implements CacheManager {
       ttl = this.args.ttl;
     }
 
-    if (ttl === 0) {
-      return;
-    }
-
-    const json = JSON.stringify(value);
-
-    if (ttl !== undefined && ttl !== null && ttl !== -1) {
-      this.redisCache.setex(key, ttl, json);
-    } else {
-      this.redisCache.set(key, json);
+    if (!isNullOrUndefined(ttl) && ttl !== 0 && ttl !== -1) {
+      this.redisCache.setex(key, ttl, JSON.stringify(value));
+    } else if (ttl !== 0) {
+      this.redisCache.set(key, JSON.stringify(value));
     }
 
     this.asyncLocalStorage.set(key, value);
-    await this.args.hooks?.set?.(key, json, ttl);
+    await this.args.hooks?.set?.(key, value, ttl);
   }
 
   @CallbackDecorator()

@@ -83,6 +83,53 @@ describe.each([
           id: 10,
         },
       });
+      await expect(redis["redisCache"].get(key)).resolves.toEqual(
+        JSON.stringify({
+          id: 1,
+          name: "Name",
+          nest: {
+            id: 10,
+          },
+        }),
+      );
+    });
+  });
+
+  it("should set cache - asyncLocalStorage only", async () => {
+    const key = "test";
+    await asyncLocalStorage.run(new Map(), async () => {
+      expect(asyncLocalStorageService.get(key)).toBeUndefined();
+      await expect(store.get(key)).resolves.toBeUndefined();
+
+      await store.set(
+        key,
+        {
+          id: 1,
+          name: "Name",
+          nest: {
+            id: 10,
+          },
+        },
+        { ttl: 0 },
+      );
+
+      expect(asyncLocalStorageService.get(key)).toEqual({
+        id: 1,
+        name: "Name",
+        nest: {
+          id: 10,
+        },
+      });
+
+      await expect(store.get(key)).resolves.toEqual({
+        id: 1,
+        name: "Name",
+        nest: {
+          id: 10,
+        },
+      });
+
+      await expect(redis["redisCache"].get(key)).resolves.toBeNull();
     });
   });
 
