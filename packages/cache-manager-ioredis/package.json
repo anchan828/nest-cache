@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@anchan828/nest-cache-common": "^0.12.5",
-    "cache-manager": "4.0.1",
+    "cache-manager": "4.1.0",
     "ioredis": "5.1.0"
   },
   "devDependencies": {
