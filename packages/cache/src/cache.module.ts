@@ -22,7 +22,6 @@ export const { ConfigurableModuleClass: CacheConfigurableModuleClass } =
       }
 
       definition.providers.push(CacheService);
-
       definition.exports.push(CacheService);
 
       const options = definition.providers?.find((p: any) => p.provide && p.provide === CACHE_MODULE_OPTIONS);

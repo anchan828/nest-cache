@@ -7,18 +7,10 @@ import { CacheService } from "./cache.service";
 import { CACHE_MODULE_OPTIONS } from "./constants";
 describe("CacheModule", () => {
   describe("register", () => {
-    it("should compile (single cache)", async () => {
+    it("should compile", async () => {
       await expect(
         Test.createTestingModule({
           imports: [CacheModule.register({})],
-        }).compile(),
-      ).resolves.toBeDefined();
-    });
-
-    it("should compile (multiple cache)", async () => {
-      await expect(
-        Test.createTestingModule({
-          imports: [CacheModule.register([{}, {}])],
         }).compile(),
       ).resolves.toBeDefined();
     });

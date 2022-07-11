@@ -1,5 +1,5 @@
 import { CACHE_MANAGER, Provider } from "@nestjs/common";
-import { caching, multiCaching } from "cache-manager";
+import { caching } from "cache-manager";
 import { CacheModuleOptions } from "./cache.interface";
 import { CACHE_MODULE_OPTIONS } from "./constants";
 
@@ -12,10 +12,8 @@ const defaultCacheOptions = {
 export function createCacheManager(): Provider {
   return {
     provide: CACHE_MANAGER,
-    useFactory: (options: CacheModuleOptions | CacheModuleOptions[]) => {
-      return Array.isArray(options)
-        ? multiCaching(options.map((store) => caching({ ...defaultCacheOptions, ...(store || {}) })))
-        : caching({ ...defaultCacheOptions, ...(options || {}) });
+    useFactory: (options: CacheModuleOptions) => {
+      return caching({ ...defaultCacheOptions, ...(options || {}) });
     },
     inject: [CACHE_MODULE_OPTIONS],
   };
