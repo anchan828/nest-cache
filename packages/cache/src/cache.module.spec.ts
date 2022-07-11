@@ -1,16 +1,16 @@
 import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
-import { CACHE_MODULE_OPTIONS } from "@nestjs/common/cache/cache.constants";
 import { ConfigModule, registerAs } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
 import { CacheModuleOptions, CacheModuleOptionsFactory } from "./cache.interface";
 import { CacheModule } from "./cache.module";
 import { CacheService } from "./cache.service";
+import { CACHE_MODULE_OPTIONS } from "./constants";
 describe("CacheModule", () => {
   describe("register", () => {
     it("should compile", async () => {
       await expect(
         Test.createTestingModule({
-          imports: [CacheModule.register()],
+          imports: [CacheModule.register({})],
         }).compile(),
       ).resolves.toBeDefined();
     });
@@ -50,12 +50,6 @@ describe("CacheModule", () => {
       expect(app.get(CACHE_MANAGER)).toBeDefined();
     });
 
-    it("should get cache option", () => {
-      expect(app.get(CACHE_MODULE_OPTIONS)).toEqual({
-        ttl: 100,
-      });
-    });
-
     it("should get CacheService", () => {
       expect(app.get(CacheService)).toBeDefined();
     });
@@ -90,7 +84,7 @@ describe("CacheModule", () => {
           ConfigModule.forRoot(),
           CacheModule.registerAsync({
             imports: [ConfigModule.forFeature(config)],
-            inject: [config],
+            inject: [config.KEY],
             useClass: Options,
           }),
         ],
