@@ -43,6 +43,8 @@ export class RedisStore implements CacheManager {
       this.redisCache.setex(key, ttl, JSON.stringify(value));
     } else if (ttl !== 0) {
       this.redisCache.set(key, JSON.stringify(value));
+    } else {
+      return;
     }
 
     this.asyncLocalStorage.set(key, value);
