@@ -1,15 +1,24 @@
 import { AsyncLocalStorage } from "async_hooks";
 import { ASYNC_LOCAL_STORAGE_PREFIX } from "./constants";
 
+function clone<T = any>(value: T): T {
+  if (typeof value === "object") {
+    return global.structuredClone ? global.structuredClone(value) : { ...value };
+  }
+
+  return value;
+}
+
 export class AsyncLocalStorageService {
   constructor(private readonly asyncLocalStorage?: AsyncLocalStorage<Map<string, any>>) {}
 
   public get<T = any>(key: string): T | undefined {
-    return this.getStore<T>()?.get(this.keyPrefix(key));
+    const value = this.getStore<T>()?.get(this.keyPrefix(key));
+    return value ? clone(value) : value;
   }
 
   public set<T = any>(key: string, value: T): void {
-    this.getStore<T>()?.set(this.keyPrefix(key), value);
+    this.getStore<T>()?.set(this.keyPrefix(key), clone(value));
   }
 
   public delete<T = any>(key: string): void {
