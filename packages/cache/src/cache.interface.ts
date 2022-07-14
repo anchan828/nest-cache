@@ -1,4 +1,4 @@
-import { CacheModuleOptions as NestCacheModuleOptions, ModuleMetadata, Provider, Type } from "@nestjs/common";
+import { CacheModuleOptions as NestCacheModuleOptions } from "@nestjs/common";
 
 export type CacheModuleOptions<T = any> = NestCacheModuleOptions &
   T & {
@@ -16,13 +16,4 @@ export interface CacheModuleOptionsFactory<T = any> {
     | Promise<CacheModuleOptions<T> | CacheModuleOptions<T>[]>
     | CacheModuleOptions<T>
     | CacheModuleOptions<T>[];
-}
-export interface CacheModuleAsyncOptions<T> extends Pick<ModuleMetadata, "imports"> {
-  useExisting?: Type<CacheModuleOptionsFactory<T>>;
-  useClass?: Type<CacheModuleOptionsFactory<T>>;
-  useFactory?: (
-    ...args: any[]
-  ) => Promise<CacheModuleOptions<T> | CacheModuleOptions<T>[]> | CacheModuleOptions<T> | CacheModuleOptions<T>[];
-  inject?: any[];
-  extraProviders?: Provider[];
 }
