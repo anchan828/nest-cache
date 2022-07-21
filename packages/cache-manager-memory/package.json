@@ -1,5 +1,5 @@
 {
-  "name": "@anchan828/nest-cache",
+  "name": "@anchan828/nest-cache-manager-memory",
   "version": "1.0.3",
   "description": "",
   "homepage": "https://github.com/anchan828/nest-cache#readme",
@@ -20,11 +20,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "copy:license": "cp ../../LICENSE ./",
-    "copy:readme": "cp ../../README.md ./",
     "lint": "TIMING=1 eslint --ignore-path ../../.eslintignore '**/*.ts'",
     "lint:fix": "npm run lint -- --fix",
-    "prepublishOnly": "npm run copy:license && npm run copy:readme",
-    "test": "jest --coverage --runInBand",
+    "prepublishOnly": "npm run copy:license",
+    "test": "jest --coverage --runInBand --detectOpenHandles",
     "test:debug": "node --inspect-brk ../../node_modules/jest/bin/jest --runInBand --logHeapUsage",
     "test:watch": "npm run test -- --watch",
     "watch": "tsc --watch"
@@ -34,10 +33,7 @@
     "cache-manager": "4.1.0"
   },
   "devDependencies": {
-    "@anchan828/nest-cache-manager-ioredis": "^1.0.3",
-    "@anchan828/nest-cache-manager-memory": "^1.0.3",
     "@nestjs/common": "9.0.2",
-    "@nestjs/config": "2.2.0",
     "@types/cache-manager": "4.0.1",
     "rxjs": "7.5.6"
   },

@@ -47,25 +47,6 @@ export class ExampleService {
 }
 ```
 
-## Versioning
-
-Sometimes you don't want to use the old cache when you update your application.
-
-You can set prefix string to key as version (**v1:key**).
-
-```ts
-@Module({
-  imports: [
-    CacheModule.register({
-      cacheVersion: "v1",
-    }),
-  ],
-})
-export class AppModule {}
-```
-
-If you set `v1` and call `CacheService.set("users/1", user)`, cache manager will save value to `v1:users/1` key, not `users/1`
-
 ## Using Redis
 
 You can use Redis instead of in-memory cache. Please use [@anchan828/nest-cache-manager-ioredis](https://www.npmjs.com/package/@anchan828/nest-cache-manager-ioredis)

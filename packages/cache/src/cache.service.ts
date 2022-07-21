@@ -1,7 +1,13 @@
-import { CacheManager, CacheManagerSetOptions, chunk, isNullOrUndefined } from "@anchan828/nest-cache-common";
-import { CACHE_MANAGER, Inject, Injectable, Logger } from "@nestjs/common";
+import {
+  CacheManager,
+  CacheManagerSetOptions,
+  chunk,
+  isNullOrUndefined,
+  patchMoreCommands,
+} from "@anchan828/nest-cache-common";
+import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { CacheModuleOptions } from "./cache.interface";
-import { CACHE_MODULE, CACHE_MODULE_OPTIONS } from "./constants";
+import { CACHE_MODULE_OPTIONS } from "./constants";
 /**
  * Access to cache manager and dependency
  *
@@ -10,14 +16,14 @@ import { CACHE_MODULE, CACHE_MODULE_OPTIONS } from "./constants";
  */
 @Injectable()
 export class CacheService {
-  private readonly logger = new Logger(CACHE_MODULE);
-
   constructor(
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: CacheManager,
     @Inject(CACHE_MODULE_OPTIONS)
     private readonly options: CacheModuleOptions,
-  ) {}
+  ) {
+    patchMoreCommands(this.cacheManager);
+  }
 
   /**
    * Get cache from store
@@ -87,16 +93,6 @@ export class CacheService {
    * @memberof CacheService
    */
   public async set(key: string, value: unknown, ttlOrOptions?: number | CacheManagerSetOptions): Promise<void> {
-    if (isNullOrUndefined(value)) {
-      this.logger.debug(`cache manager doesn't store 'value' because 'value' is undefined.`);
-      return;
-    }
-
-    if (typeof key !== "string") {
-      this.logger.debug(`cache manager doesn't store 'value' because 'key' is undefined.`);
-      return;
-    }
-
     const options: CacheManagerSetOptions =
       typeof ttlOrOptions === "number" ? { ttl: ttlOrOptions } : ttlOrOptions || {};
 
@@ -119,6 +115,26 @@ export class CacheService {
     await this.cacheManager.del(...keys);
   }
 
+  public async hget<T>(key: string, field: string): Promise<T | undefined> {
+    return this.cacheManager.hget(key, field);
+  }
+
+  public async hset<T>(key: string, field: string, value: T): Promise<void> {
+    await this.cacheManager.hset(key, field, value);
+  }
+
+  public async hdel(key: string, ...fields: string[]): Promise<void> {
+    await this.cacheManager.hdel(key, ...fields);
+  }
+
+  public async hgetall(key: string): Promise<Record<string, any>> {
+    return this.cacheManager.hgetall(key);
+  }
+
+  public async hkeys(key: string): Promise<string[]> {
+    return this.cacheManager.hkeys(key);
+  }
+
   /**
    * Get keys
    *
@@ -128,26 +144,19 @@ export class CacheService {
    */
   public async getKeys(pattern?: string): Promise<string[]> {
     let keys: string[] = [];
-    let keyPattern = pattern;
-    if (keyPattern && this.options.cacheVersion) {
-      keyPattern = `${this.options.cacheVersion}:${pattern}`;
-    }
 
-    if (keyPattern !== undefined && this.isMemoryStore()) {
+    if (pattern !== undefined && this.isMemoryStore()) {
       keys = await this.cacheManager.keys();
       keys = keys.filter((key) => key);
-      if (keyPattern) {
-        const inMemoryPattern = keyPattern.replace(new RegExp(/\*/, "g"), ".*");
+      if (pattern) {
+        const inMemoryPattern = pattern.replace(new RegExp(/\*/, "g"), ".*");
         keys = keys.filter((key) => key.match(`^${inMemoryPattern}`));
       }
     } else {
-      keys = await this.cacheManager.keys(keyPattern);
+      keys = await this.cacheManager.keys(pattern);
     }
 
-    return keys
-      .filter((k) => k)
-      .sort()
-      .map((k) => (this.options.cacheVersion ? k.replace(new RegExp(`^(${this.options.cacheVersion}?):`), "") : k));
+    return keys.filter((k) => k).sort();
   }
 
   /**

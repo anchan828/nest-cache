@@ -1,4 +1,4 @@
-import { CacheManager } from "@anchan828/nest-cache-common";
+import { CacheManager, patchMoreCommands } from "@anchan828/nest-cache-common";
 import { AsyncLocalStorage } from "async_hooks";
 import { caching } from "cache-manager";
 import Redis from "ioredis";
@@ -40,6 +40,9 @@ describe.each([
     redis2 = store2.store;
 
     asyncLocalStorageService = store["store"]["asyncLocalStorage"];
+
+    patchMoreCommands(store);
+    patchMoreCommands(store2);
   });
 
   afterEach(async () => {
@@ -199,5 +202,36 @@ describe.each([
     await store.mset("key1", "key1:value", "key2", "key2:value", "key3", "key3:value", { ttl: 1234 });
     await expect(store.keys()).resolves.toEqual(["key1", "key2", "key3"]);
     await expect(store.mget(...["key1", "key2", "key3"])).resolves.toEqual(["key1:value", "key2:value", "key3:value"]);
+  });
+
+  it("should mset", async () => {
+    await store.mset("key1", "key1:value", "key2", "key2:value", "key3", "key3:value", { ttl: 1000 });
+    await expect(store.keys()).resolves.toEqual(["key1", "key2", "key3"]);
+    await expect(store.mget(...["key1", "key2", "key3"])).resolves.toEqual(["key1:value", "key2:value", "key3:value"]);
+  });
+
+  it("should mset with options", async () => {
+    await store.mset("key1", "key1:value", "key2", "key2:value", "key3", "key3:value", { ttl: 1234 });
+    await expect(store.keys()).resolves.toEqual(["key1", "key2", "key3"]);
+    await expect(store.mget(...["key1", "key2", "key3"])).resolves.toEqual(["key1:value", "key2:value", "key3:value"]);
+  });
+
+  it("should hget", async () => {
+    await store.hset("key", "field", "value");
+    await expect(store.hget("key", "field")).resolves.toEqual("value");
+  });
+
+  it("should hset", async () => {
+    await store.hset("key", "field", "value");
+    await expect(store.keys()).resolves.toEqual(["key"]);
+    await expect(store.hkeys("key")).resolves.toEqual(["field"]);
+    await expect(store.hgetall("key")).resolves.toEqual({ field: "value" });
+  });
+
+  it("should hdel", async () => {
+    await store.hset("key", "field", "value");
+    await expect(store.hget("key", "field")).resolves.toEqual("value");
+    await expect(store.hdel("key", "field")).resolves.toBeUndefined();
+    await expect(store.hget("key", "field")).resolves.toBeUndefined();
   });
 });

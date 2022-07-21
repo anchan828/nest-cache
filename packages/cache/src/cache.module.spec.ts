@@ -64,9 +64,7 @@ describe("CacheModule", () => {
         constructor(@Inject(config.KEY) private readonly conf: { version: string }) {}
 
         createCacheOptions(): CacheModuleOptions | Promise<CacheModuleOptions> {
-          return {
-            cacheVersion: this.conf.version,
-          };
+          return {};
         }
       }
 
@@ -91,7 +89,7 @@ describe("CacheModule", () => {
         providers: [Service],
       }).compile();
       expect(moduleRef).toBeDefined();
-      expect(moduleRef.get(Service).getOptions()).toEqual({ cacheVersion: "version" });
+      expect(moduleRef.get(Service).getOptions()).toEqual({});
     });
   });
 
