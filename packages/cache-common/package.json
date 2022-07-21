@@ -22,7 +22,6 @@
     "copy:license": "cp ../../LICENSE ./",
     "lint": "TIMING=1 eslint --ignore-path ../../.eslintignore '**/*.ts'",
     "lint:fix": "npm run lint -- --fix",
-    "prepublishOnly": "npm run copy:license",
     "test": "jest --coverage --runInBand --detectOpenHandles --forceExit",
     "test:debug": "node --inspect-brk ../../node_modules/jest/bin/jest --runInBand --logHeapUsage",
     "test:watch": "npm run test -- --watch",
