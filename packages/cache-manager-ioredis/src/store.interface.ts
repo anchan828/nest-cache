@@ -21,17 +21,15 @@ export interface RedisStoreArgs extends RedisOptions {
     /**
      * Called when the redis cache is hit.
      */
-    hit?: (key: string) => void | Promise<void>;
+    hit?: (key: string, field: string | undefined) => void | Promise<void>;
 
     /**
      * Called when a cache is saved to redis.
      */
-    set?: (key: string, value: any, ttl?: number) => void | Promise<void>;
+    set?: (key: string, field: string | undefined, value: any, ttl: number | undefined) => void | Promise<void>;
     /**
      * Called when a cache is deleted from redis.
      */
-    delete?: (key: string) => void | Promise<void>;
+    delete?: (key: string, field: string | undefined) => void | Promise<void>;
   };
 }
-
-export type CallbackFunction = (err?: Error | null, result?: any | null) => void;

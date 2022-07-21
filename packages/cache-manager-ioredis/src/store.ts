@@ -10,7 +10,6 @@ import { CacheStore, CacheStoreFactory, LiteralObject } from "@nestjs/common";
 import Redis from "ioredis";
 import { AsyncLocalStorageService } from "./async-local-storage.service";
 import { CACHE_STORE_NAME } from "./constants";
-import { CallbackDecorator, DelCallbackDecorator } from "./store.decorator";
 import { RedisStoreArgs } from "./store.interface";
 
 export class RedisStore implements CacheManager {
@@ -25,7 +24,6 @@ export class RedisStore implements CacheManager {
     this.redisCache = new Redis(args);
   }
 
-  @CallbackDecorator()
   public async set<T = any>(key: string, value: T, options?: CacheManagerSetOptions): Promise<void> {
     if (value === undefined || value === null) {
       return;
@@ -46,12 +44,11 @@ export class RedisStore implements CacheManager {
     } else {
       return;
     }
-
     this.asyncLocalStorage.set(key, value);
-    await this.args.hooks?.set?.(key, value, ttl);
+
+    await this.args.hooks?.set?.(key, undefined, value, ttl);
   }
 
-  @CallbackDecorator()
   public async get<T>(key: string): Promise<T | undefined> {
     if (typeof key !== "string") {
       return;
@@ -72,22 +69,20 @@ export class RedisStore implements CacheManager {
     result = parseJSON<T>(rawResult);
 
     this.asyncLocalStorage.set(key, result);
-    await this.args.hooks?.hit?.(key);
+    await this.args.hooks?.hit?.(key, undefined);
     return result;
   }
 
-  @DelCallbackDecorator()
   public async del(...keys: string[]): Promise<void> {
     for (const deleteKeys of chunk(keys, 2000)) {
       await this.redisCache.del(...deleteKeys);
       for (const key of deleteKeys) {
         this.asyncLocalStorage.delete(key);
-        await this.args.hooks?.delete?.(key);
+        await this.args.hooks?.delete?.(key, undefined);
       }
     }
   }
 
-  @CallbackDecorator()
   public async keys(pattern?: string): Promise<string[]> {
     const results: string[] = [];
     if (!pattern) {
@@ -101,7 +96,6 @@ export class RedisStore implements CacheManager {
     return results.sort();
   }
 
-  @DelCallbackDecorator()
   public async reset(): Promise<void> {
     this.asyncLocalStorage.clear();
     const keys = await this.keys();
@@ -110,7 +104,6 @@ export class RedisStore implements CacheManager {
     }
   }
 
-  @CallbackDecorator()
   public async mget<T>(...keysOrOptions: string[]): Promise<Array<T | undefined>> {
     const keys = keysOrOptions.filter((x): x is string => typeof x === "string") as string[];
 
@@ -142,7 +135,7 @@ export class RedisStore implements CacheManager {
           const value = parseJSON<T>(results[index]);
           map.set(key, value);
 
-          await this.args.hooks?.hit?.(key);
+          await this.args.hooks?.hit?.(key, undefined);
 
           this.asyncLocalStorage.set(key, value);
         }
@@ -151,7 +144,6 @@ export class RedisStore implements CacheManager {
     return [...map.values()];
   }
 
-  @CallbackDecorator()
   public async mset<T>(...keyOrValues: Array<string | T | CacheManagerSetOptions>): Promise<void> {
     let options: CacheManagerSetOptions | undefined;
 
@@ -191,11 +183,73 @@ export class RedisStore implements CacheManager {
           this.redisCache.set(key, json);
         }
 
-        await this.args.hooks?.set?.(key, json, ttl);
+        await this.args.hooks?.set?.(key, undefined, json, ttl);
 
         this.asyncLocalStorage.set(key, value);
       }
     }
+  }
+
+  public async hget<T>(key: string, field: string): Promise<T | undefined> {
+    const asyncLocalStorageKey = `${key}:h:${field}`;
+
+    let result: T | null | undefined = this.asyncLocalStorage.get<T>(asyncLocalStorageKey);
+
+    if (!isNullOrUndefined(result)) {
+      return result;
+    }
+
+    const rawResult = await this.redisCache.hget(key, field);
+
+    if (isNullOrUndefined(rawResult)) {
+      return;
+    }
+
+    result = parseJSON<T>(rawResult);
+
+    this.asyncLocalStorage.set(asyncLocalStorageKey, result);
+    await this.args.hooks?.hit?.(key, field);
+
+    return result;
+  }
+
+  public async hset<T>(key: string, field: string, value: T): Promise<void> {
+    if (value === undefined || value === null) {
+      return;
+    }
+
+    const asyncLocalStorageKey = `${key}:h:${field}`;
+
+    this.redisCache.hset(key, field, JSON.stringify(value));
+
+    this.asyncLocalStorage.set(asyncLocalStorageKey, value);
+
+    await this.args.hooks?.set?.(key, field, value, undefined);
+  }
+
+  public async hdel(key: string, ...fields: string[]): Promise<void> {
+    for (const deleteFields of chunk(fields, 2000)) {
+      await this.redisCache.hdel(key, ...deleteFields);
+      for (const field of deleteFields) {
+        this.asyncLocalStorage.delete(`${key}:h:${field}`);
+        await this.args.hooks?.delete?.(key, field);
+      }
+    }
+  }
+
+  public async hgetall(key: string): Promise<Record<string, any>> {
+    const rawResults = await this.redisCache.hgetall(key);
+    const results: Record<string, any> = {};
+
+    for (const [key, value] of Object.entries(rawResults)) {
+      results[key] = parseJSON(value);
+    }
+
+    return results;
+  }
+
+  public async hkeys(key: string): Promise<string[]> {
+    return await this.redisCache.hkeys(key);
   }
 
   public async close(): Promise<void> {
