@@ -7,16 +7,6 @@
 
 Shared package for @anchan828/nest-cache
 
-## Quick Start
-
-```ts
-const obj = { id: 1, name: "name", date: new Date() };
-const json = JSON.stringify(data);
-
-parseJSON(json);
-// => equals with obj
-```
-
 ## License
 
 [MIT](LICENSE)

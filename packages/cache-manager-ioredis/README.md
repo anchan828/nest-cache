@@ -49,7 +49,8 @@ asyncLocalStorage.run(new Map(), ()=>{
 
 ## Notes
 
-- JSON.parse has reviver for Date.parse
+- This package uses MessagePack for efficient serialization/deserialization.
+  - The most obvious is to serialize/deserialize a Date object with JSON. JSON.parse does not support Date object, so you need to implement the receiver yourself. Checking and parsing properties one by one as strings is an inefficient and very time-consuming process.
 
 ## License
 
