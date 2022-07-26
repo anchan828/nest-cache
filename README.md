@@ -47,6 +47,23 @@ export class ExampleService {
 }
 ```
 
+## Using In-memory
+
+@anchan828/nest-cache has been extended to make more Redis commands available. In line with this, the memory store also provides compatibility features. Please use [@anchan828/nest-cache-manager-memory](https://www.npmjs.com/package/@anchan828/nest-cache-manager-memory) instead of the default memory store.
+
+```ts
+import { memoryStore } from "@anchan828/nest-cache-manager-memory";
+
+@Module({
+  imports: [
+    CacheModule.register({
+      store: memoryStore,
+    }),
+  ],
+})
+export class AppModule {}
+```
+
 ## Using Redis
 
 You can use Redis instead of in-memory cache. Please use [@anchan828/nest-cache-manager-ioredis](https://www.npmjs.com/package/@anchan828/nest-cache-manager-ioredis)
@@ -67,6 +84,14 @@ const asyncLocalStorage = new AsyncLocalStorage<Map<string, any>>();
 })
 export class AppModule {}
 ```
+
+## Supported for more Redis commands
+
+- hget
+- hset
+- hdel
+- hgetall
+- hkeys
 
 ## License
 
