@@ -20,7 +20,7 @@ import { memoryStore } from "@anchan828/nest-cache-manager-memory";
 import { caching } from "cache-manager";
 
 caching({
-  store: redisStore,
+  store: memoryStore,
 });
 ```
 
