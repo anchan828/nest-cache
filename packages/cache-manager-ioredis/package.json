@@ -33,7 +33,7 @@
     "ioredis": "5.2.2"
   },
   "devDependencies": {
-    "@nestjs/common": "9.0.2",
+    "@nestjs/common": "9.0.5",
     "@types/cache-manager": "4.0.1",
     "rxjs": "7.5.6"
   },
