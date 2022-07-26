@@ -1,17 +1,11 @@
 /* eslint-disable prefer-rest-params */
-import {
-  CacheManager,
-  CacheManagerSetOptions,
-  chunk,
-  isNullOrUndefined,
-  parseJSON,
-} from "@anchan828/nest-cache-common";
+import { CacheManager, CacheManagerSetOptions, chunk, isNullOrUndefined } from "@anchan828/nest-cache-common";
 import { CacheStore, CacheStoreFactory, LiteralObject } from "@nestjs/common";
 import Redis from "ioredis";
+import { pack, unpack } from "msgpackr";
 import { AsyncLocalStorageService } from "./async-local-storage.service";
 import { CACHE_STORE_NAME } from "./constants";
 import { RedisStoreArgs } from "./store.interface";
-
 export class RedisStore implements CacheManager {
   private readonly redisCache: Redis;
 
@@ -38,9 +32,9 @@ export class RedisStore implements CacheManager {
     }
 
     if (!isNullOrUndefined(ttl) && ttl !== 0 && ttl !== -1) {
-      this.redisCache.setex(key, ttl, JSON.stringify(value));
+      this.redisCache.setex(key, ttl, pack(value));
     } else if (ttl !== 0) {
-      this.redisCache.set(key, JSON.stringify(value));
+      this.redisCache.set(key, pack(value));
     } else {
       return;
     }
@@ -60,13 +54,13 @@ export class RedisStore implements CacheManager {
       return result;
     }
 
-    const rawResult = await this.redisCache.get(key);
+    const rawResult = await this.redisCache.getBuffer(key);
 
     if (isNullOrUndefined(rawResult)) {
       return;
     }
 
-    result = parseJSON<T>(rawResult);
+    result = unpack(rawResult) as T;
 
     this.asyncLocalStorage.set(key, result);
     await this.args.hooks?.hit?.(key, undefined);
@@ -123,16 +117,17 @@ export class RedisStore implements CacheManager {
     const notFoundKeys = [...map.keys()].filter((key) => map.get(key) === undefined);
 
     if (notFoundKeys.length !== 0) {
-      const results: Array<string | undefined> = [];
+      const results: Array<Buffer | null> = [];
 
       for (const keys of chunk(notFoundKeys, 2000)) {
-        results.push(...((await this.redisCache.mget(...keys)) as Array<string | undefined>));
+        results.push(...((await this.redisCache.mgetBuffer(...keys)) as Array<Buffer | null>));
       }
 
       for (let index = 0; index < notFoundKeys.length; index++) {
-        if (results[index] !== undefined && results[index] !== null) {
+        const rawValue = results[index];
+        if (rawValue !== undefined && rawValue !== null) {
           const key = notFoundKeys[index];
-          const value = parseJSON<T>(results[index]);
+          const value = unpack(rawValue) as T;
           map.set(key, value);
 
           await this.args.hooks?.hit?.(key, undefined);
@@ -175,15 +170,13 @@ export class RedisStore implements CacheManager {
           continue;
         }
 
-        const json = JSON.stringify(value);
-
         if (ttl !== undefined && ttl !== null && ttl !== -1) {
-          this.redisCache.setex(key, ttl, json);
+          this.redisCache.setex(key, ttl, pack(value));
         } else {
-          this.redisCache.set(key, json);
+          this.redisCache.set(key, pack(value));
         }
 
-        await this.args.hooks?.set?.(key, undefined, json, ttl);
+        await this.args.hooks?.set?.(key, undefined, value, ttl);
 
         this.asyncLocalStorage.set(key, value);
       }
@@ -199,13 +192,13 @@ export class RedisStore implements CacheManager {
       return result;
     }
 
-    const rawResult = await this.redisCache.hget(key, field);
+    const rawResult = await this.redisCache.hgetBuffer(key, field);
 
     if (isNullOrUndefined(rawResult)) {
       return;
     }
 
-    result = parseJSON<T>(rawResult);
+    result = unpack(rawResult) as T;
 
     this.asyncLocalStorage.set(asyncLocalStorageKey, result);
     await this.args.hooks?.hit?.(key, field);
@@ -220,7 +213,7 @@ export class RedisStore implements CacheManager {
 
     const asyncLocalStorageKey = `${key}:h:${field}`;
 
-    this.redisCache.hset(key, field, JSON.stringify(value));
+    this.redisCache.hset(key, field, pack(value));
 
     this.asyncLocalStorage.set(asyncLocalStorageKey, value);
 
@@ -238,11 +231,11 @@ export class RedisStore implements CacheManager {
   }
 
   public async hgetall(key: string): Promise<Record<string, any>> {
-    const rawResults = await this.redisCache.hgetall(key);
+    const rawResults = await this.redisCache.hgetallBuffer(key);
     const results: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(rawResults)) {
-      results[key] = parseJSON(value);
+      results[key] = unpack(value) as any;
     }
 
     return results;

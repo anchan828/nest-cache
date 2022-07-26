@@ -2,6 +2,7 @@ import { CacheManager, patchMoreCommands } from "@anchan828/nest-cache-common";
 import { AsyncLocalStorage } from "async_hooks";
 import { caching } from "cache-manager";
 import Redis from "ioredis";
+import { pack, unpack } from "msgpackr";
 import { AsyncLocalStorageService } from "./async-local-storage.service";
 import { RedisStore, redisStore } from "./store";
 
@@ -62,13 +63,14 @@ describe.each([
     await asyncLocalStorage.run(new Map(), async () => {
       expect(asyncLocalStorageService.get(key)).toBeUndefined();
       await expect(store.get(key)).resolves.toBeUndefined();
-
+      const date = new Date();
       await store.set(key, {
         id: 1,
         name: "Name",
         nest: {
           id: 10,
         },
+        date,
       });
 
       expect(asyncLocalStorageService.get(key)).toEqual({
@@ -77,6 +79,7 @@ describe.each([
         nest: {
           id: 10,
         },
+        date,
       });
 
       await expect(store.get(key)).resolves.toEqual({
@@ -85,16 +88,33 @@ describe.each([
         nest: {
           id: 10,
         },
+        date,
       });
-      await expect(redis["redisCache"].get(key)).resolves.toEqual(
-        JSON.stringify({
+
+      await expect(redis["redisCache"].getBuffer(key)).resolves.toEqual(
+        pack({
           id: 1,
           name: "Name",
           nest: {
             id: 10,
           },
+          date,
         }),
       );
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const buf = await redis["redisCache"].getBuffer(key);
+      expect(buf).not.toBeNull();
+      if (buf != null) {
+        expect(unpack(buf)).toEqual({
+          id: 1,
+          name: "Name",
+          nest: {
+            id: 10,
+          },
+          date,
+        });
+      }
     });
   });
 
@@ -115,6 +135,13 @@ describe.each([
         id: 10,
       },
     });
+  });
+
+  it("should set array", async () => {
+    const key = "test";
+    await store.set(key, [1, "2", true]);
+    redis["asyncLocalStorage"].delete(key);
+    await expect(redis.get(key)).resolves.toEqual([1, "2", true]);
   });
 
   it("should set ttl", async () => {
