@@ -36,7 +36,7 @@
   "devDependencies": {
     "@anchan828/nest-cache-manager-ioredis": "^1.2.0",
     "@anchan828/nest-cache-manager-memory": "^1.2.0",
-    "@nestjs/common": "9.0.5",
+    "@nestjs/common": "9.0.7",
     "@nestjs/config": "2.2.0",
     "@types/cache-manager": "4.0.1",
     "rxjs": "7.5.6"
