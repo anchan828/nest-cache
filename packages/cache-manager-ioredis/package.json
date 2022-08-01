@@ -31,7 +31,7 @@
     "@anchan828/nest-cache-common": "^1.2.1",
     "cache-manager": "4.1.0",
     "ioredis": "5.2.2",
-    "msgpackr": "1.6.1"
+    "msgpackr": "1.6.2"
   },
   "devDependencies": {
     "@nestjs/common": "9.0.7",
