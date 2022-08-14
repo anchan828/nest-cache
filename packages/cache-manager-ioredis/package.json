@@ -1,6 +1,6 @@
 {
   "name": "@anchan828/nest-cache-manager-ioredis",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "",
   "homepage": "https://github.com/anchan828/nest-cache#readme",
   "bugs": {
@@ -28,7 +28,7 @@
     "watch": "tsc --watch"
   },
   "dependencies": {
-    "@anchan828/nest-cache-common": "^1.2.2",
+    "@anchan828/nest-cache-common": "^1.2.3",
     "cache-manager": "4.1.0",
     "ioredis": "5.2.2",
     "msgpackr": "1.6.2"
