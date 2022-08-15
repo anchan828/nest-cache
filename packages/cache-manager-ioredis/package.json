@@ -34,7 +34,7 @@
     "msgpackr": "1.6.2"
   },
   "devDependencies": {
-    "@nestjs/common": "9.0.7",
+    "@nestjs/common": "9.0.9",
     "@types/cache-manager": "4.0.1",
     "rxjs": "7.5.6"
   },
