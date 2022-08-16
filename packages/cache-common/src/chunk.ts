@@ -1,3 +1,5 @@
-export function chunk<T extends any[]>(arr: T, size: number): T[] {
-  return arr.reduce((newarr, _, i) => (i % size ? newarr : [...newarr, arr.slice(i, i + size)]), []);
+export function chunk<T>(arr: T[], size: number): T[][] {
+  return Array.from({ length: Math.ceil(arr.length / size) }, (_: T, i: number) =>
+    arr.slice(i * size, i * size + size),
+  );
 }
