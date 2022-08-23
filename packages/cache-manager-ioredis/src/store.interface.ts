@@ -1,6 +1,14 @@
 import { AsyncLocalStorage } from "async_hooks";
-import { RedisOptions } from "ioredis";
+import Redis, { RedisOptions } from "ioredis";
 export interface RedisStoreArgs extends RedisOptions {
+  /**
+   * The shared redis client
+   *
+   * @type {Redis}
+   * @memberof RedisStoreArgs
+   */
+  client?: Redis;
+
   /**
    * The ttl in seconds.
    *
