@@ -54,7 +54,7 @@ describe.each([
 
   afterEach(async () => {
     if (storeName.includes("redis")) {
-      await service?.["cacheManager"]?.["store"]?.["redisCache"]?.flushdb();
+      await service?.["cacheManager"]?.["store"]?.["client"]?.flushdb();
       await service?.["cacheManager"]?.["store"]?.close();
     }
   });
