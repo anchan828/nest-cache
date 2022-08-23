@@ -145,13 +145,11 @@ export class CacheService {
   public async getKeys(pattern?: string): Promise<string[]> {
     let keys: string[] = [];
 
-    if (pattern !== undefined && this.isMemoryStore()) {
+    if (!isNullOrUndefined(pattern) && this.isMemoryStore()) {
       keys = await this.cacheManager.keys();
       keys = keys.filter((key) => key);
-      if (pattern) {
-        const inMemoryPattern = pattern.replace(new RegExp(/\*/, "g"), ".*");
-        keys = keys.filter((key) => key.match(`^${inMemoryPattern}`));
-      }
+      const inMemoryPattern = pattern.replace(new RegExp(/\*/, "g"), ".*");
+      keys = keys.filter((key) => key.match(`^${inMemoryPattern}`));
     } else {
       keys = await this.cacheManager.keys(pattern);
     }

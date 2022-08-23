@@ -1,7 +1,6 @@
 import { CacheManager, patchMoreCommands } from "@anchan828/nest-cache-common";
 import { AsyncLocalStorage } from "async_hooks";
 import { caching } from "cache-manager";
-import Redis from "ioredis";
 import { pack, unpack } from "msgpackr";
 import { AsyncLocalStorageService } from "./async-local-storage.service";
 import { RedisStore, redisStore } from "./store";
@@ -15,7 +14,6 @@ describe.each([
   let store: CacheManager;
   let redis: RedisStore;
   let store2: CacheManager;
-  let redis2: RedisStore;
   beforeEach(async () => {
     asyncLocalStorage = new AsyncLocalStorage();
 
@@ -31,27 +29,19 @@ describe.each([
 
     store2 = caching({
       store: redisStore,
-      host: process.env.REDIS_HOST || "localhost",
-      port,
       asyncLocalStorage,
-      db: 2,
-      ttl: 5,
+      client: redis["client"],
+      ttl: 10,
     } as any) as any as CacheManager;
-
-    redis2 = store2.store;
 
     asyncLocalStorageService = store["store"]["asyncLocalStorage"];
 
     patchMoreCommands(store);
-    patchMoreCommands(store2);
   });
 
   afterEach(async () => {
-    await redis["redisCache"].flushdb();
+    await redis["client"].flushdb();
     await redis.close();
-
-    await redis2["redisCache"].flushdb();
-    await redis2.close();
   });
 
   it("create cache instance", () => {
@@ -91,7 +81,7 @@ describe.each([
         date,
       });
 
-      await expect(redis["redisCache"].getBuffer(key)).resolves.toEqual(
+      await expect(redis["client"].getBuffer(key)).resolves.toEqual(
         pack({
           id: 1,
           name: "Name",
@@ -103,7 +93,7 @@ describe.each([
       );
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const buf = await redis["redisCache"].getBuffer(key);
+      const buf = await redis["client"].getBuffer(key);
       expect(buf).not.toBeNull();
       if (buf != null) {
         expect(unpack(buf)).toEqual({
@@ -147,13 +137,13 @@ describe.each([
   it("should set ttl", async () => {
     const key = "test";
     await store.set(key, { id: 1 }, { ttl: 10 });
-    await expect(redis["redisCache"].ttl(key)).resolves.toBeGreaterThan(5);
+    await expect(redis["client"].ttl(key)).resolves.toBeGreaterThan(5);
   });
 
   it("should set ttl: -1", async () => {
     const key = "test";
     await store.set(key, { id: 1 }, { ttl: -1 });
-    await expect(redis["redisCache"].ttl(key)).resolves.toEqual(-1);
+    await expect(redis["client"].ttl(key)).resolves.toEqual(-1);
   });
 
   it("should delete cache", async () => {
@@ -202,7 +192,7 @@ describe.each([
     const results = await store.keys();
     expect(results.sort()).toEqual(["changed:key"]);
 
-    const redis = (store as any).store.redisCache as Redis;
+    const redis = (store as any).store["client"];
     await redis.quit();
   });
 
@@ -260,5 +250,10 @@ describe.each([
     await expect(store.hget("key", "field")).resolves.toEqual("value");
     await expect(store.hdel("key", "field")).resolves.toBeUndefined();
     await expect(store.hget("key", "field")).resolves.toBeUndefined();
+  });
+
+  it("should use shared client", async () => {
+    await store.set("key", "value");
+    await expect(store2.get("key")).resolves.toEqual("value");
   });
 });
