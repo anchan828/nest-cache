@@ -11,3 +11,5 @@ services:
     image: docker.dragonflydb.io/dragonflydb/dragonfly
     ports:
       - "6380:6379"
+    ulimits:
+      memlock: -1
