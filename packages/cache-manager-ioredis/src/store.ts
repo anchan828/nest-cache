@@ -19,7 +19,7 @@ export class RedisStore implements CacheManager {
   }
 
   public async set<T = any>(key: string, value: T, options?: CacheManagerSetOptions): Promise<void> {
-    if (value === undefined || value === null) {
+    if (isNullOrUndefined(value)) {
       return;
     }
 
@@ -125,7 +125,7 @@ export class RedisStore implements CacheManager {
 
       for (let index = 0; index < notFoundKeys.length; index++) {
         const rawValue = results[index];
-        if (rawValue !== undefined && rawValue !== null) {
+        if (!isNullOrUndefined(rawValue)) {
           const key = notFoundKeys[index];
           const value = unpack(rawValue) as T;
           map.set(key, value);
@@ -154,7 +154,7 @@ export class RedisStore implements CacheManager {
           continue;
         }
 
-        if (value === undefined || value === null) {
+        if (isNullOrUndefined(value)) {
           continue;
         }
 
@@ -170,7 +170,7 @@ export class RedisStore implements CacheManager {
           continue;
         }
 
-        if (ttl !== undefined && ttl !== null && ttl !== -1) {
+        if (!isNullOrUndefined(ttl) && ttl !== -1) {
           this.client.setex(key, ttl, pack(value));
         } else {
           this.client.set(key, pack(value));
@@ -207,7 +207,7 @@ export class RedisStore implements CacheManager {
   }
 
   public async hset<T>(key: string, field: string, value: T): Promise<void> {
-    if (value === undefined || value === null) {
+    if (isNullOrUndefined(value)) {
       return;
     }
 
