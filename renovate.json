@@ -1,3 +1,4 @@
 {
-  "extends": ["github>anchan828/renovate-config"]
+  "extends": ["github>anchan828/renovate-config"],
+  "rangeStrategy": "bump"
 }
