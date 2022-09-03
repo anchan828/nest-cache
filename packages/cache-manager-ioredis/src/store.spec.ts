@@ -1,14 +1,19 @@
 import { CacheManager, patchMoreCommands } from "@anchan828/nest-cache-common";
 import { AsyncLocalStorage } from "async_hooks";
 import { caching } from "cache-manager";
+import Redis from "ioredis";
 import { pack, unpack } from "msgpackr";
 import { AsyncLocalStorageService } from "./async-local-storage.service";
 import { RedisStore, redisStore } from "./store";
-
 describe.each([
-  { name: "redis", port: 6379 },
-  { name: "dragonfly", port: 6380 },
-])("RedisStore: $name", ({ port }) => {
+  { name: "ioredis", client: new Redis({ db: 1, port: 6379, host: process.env.REDIS_HOST || "localhost" }) },
+  {
+    name: "ioredis-mock",
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    client: new (require("ioredis-mock"))(),
+  },
+  { name: "dragonfly", client: new Redis({ db: 1, port: 6380, host: process.env.REDIS_HOST || "localhost" }) },
+])("RedisStore: $name", ({ client }) => {
   let asyncLocalStorage: AsyncLocalStorage<Map<string, any>>;
   let asyncLocalStorageService: AsyncLocalStorageService;
   let store: CacheManager;
@@ -19,10 +24,8 @@ describe.each([
 
     store = caching({
       store: redisStore,
-      host: process.env.REDIS_HOST || "localhost",
-      port,
+      client,
       asyncLocalStorage,
-      db: 1,
       ttl: 5,
     } as any) as any as CacheManager;
     redis = (store as any).store;
@@ -37,10 +40,17 @@ describe.each([
     asyncLocalStorageService = store["store"]["asyncLocalStorage"];
 
     patchMoreCommands(store);
+
+    if (client.status === "end") {
+      await client.connect();
+    }
   });
 
   afterEach(async () => {
-    await redis["client"].flushdb();
+    await client.flushdb();
+  });
+
+  afterAll(async () => {
     await redis.close();
   });
 
