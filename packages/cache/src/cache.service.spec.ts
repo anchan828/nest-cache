@@ -112,6 +112,7 @@ describe.each([
 
   describe("mget", () => {
     it("should get caches", async () => {
+      await expect(service.mget()).resolves.toEqual({});
       await expect(service.mget([])).resolves.toEqual({});
 
       await expect(service.mget(["key1", "key2"])).resolves.toEqual({
@@ -168,10 +169,21 @@ describe.each([
     });
 
     describe("hdel", () => {
+      it("should not call hdel", async () => {
+        await expect(service.hdel("key")).resolves.toBeUndefined();
+      });
+
       it("should delete cache", async () => {
         await service.hset("key", "field", "value");
         await expect(service.hget("key", "field")).resolves.toEqual("value");
         await expect(service.hdel("key", "field")).resolves.toBeUndefined();
+        await expect(service.hget("key", "field")).resolves.toBeUndefined();
+      });
+
+      it("should delete cache with array", async () => {
+        await service.hset("key", "field", "value");
+        await expect(service.hget("key", "field")).resolves.toEqual("value");
+        await expect(service.hdel("key", ["field"])).resolves.toBeUndefined();
         await expect(service.hget("key", "field")).resolves.toBeUndefined();
       });
     });

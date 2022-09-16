@@ -43,17 +43,45 @@ export class CacheService {
    * @return {*}  {(Promise<(T | undefined)[]>)}
    * @memberof CacheService
    */
-  public async mget<T>(keys: string[]): Promise<Record<string, T | undefined>> {
-    if (keys.length === 0) {
+  public async mget<T>(keys: string[]): Promise<Record<string, T | undefined>>;
+
+  /**
+   * Get caches
+   *
+   * @template T
+   * @param {...string[]} keys
+   * @return {*}  {(Promise<Record<string, T | undefined>>)}
+   * @memberof CacheService
+   */
+  public async mget<T>(...keys: string[]): Promise<Record<string, T | undefined>>;
+
+  /**
+   * Get caches
+   *
+   * @template T
+   * @param {(string[] | string | undefined)} keyOrKeys
+   * @param {...string[]} keys
+   * @return {*}  {(Promise<Record<string, T | undefined>>)}
+   * @memberof CacheService
+   */
+  public async mget<T>(
+    keyOrKeys: string[] | string | undefined,
+    ...keys: string[]
+  ): Promise<Record<string, T | undefined>> {
+    let getKeys: string[] = Array.isArray(keyOrKeys) ? keyOrKeys : keyOrKeys ? [keyOrKeys] : [];
+
+    getKeys = Array.from(new Set([...getKeys, ...keys]));
+
+    if (getKeys.length === 0) {
       return {};
     }
 
     const result: Record<string, T | undefined> = {};
 
-    const caches = await this.cacheManager.mget<T>(...keys);
+    const caches = await this.cacheManager.mget<T>(...getKeys);
 
-    for (let i = 0; i < keys.length; i++) {
-      result[keys[i]] = caches[i];
+    for (let i = 0; i < getKeys.length; i++) {
+      result[getKeys[i]] = caches[i];
     }
 
     return result;
@@ -101,18 +129,40 @@ export class CacheService {
 
   /**
    * Delete cache from store
-   * @param {string} keys
-   * @returns {Promise<void>}
+   *
+   * @param {string[]} keys
+   * @return {*}  {Promise<void>}
    * @memberof CacheService
    */
-  public async delete(...keys: string[]): Promise<void> {
-    if (keys.length === 0) {
+  public async delete(keys: string[]): Promise<void>;
+
+  /**
+   * Delete cache from store
+   *
+   * @param {...string[]} keys
+   * @return {*}  {Promise<void>}
+   * @memberof CacheService
+   */
+  public async delete(...keys: string[]): Promise<void>;
+
+  /**
+   * Delete cache from store
+   *
+   * @param {(string[] | string | undefined)} keyOrKeys
+   * @param {...string[]} keys
+   * @return {*}  {Promise<void>}
+   * @memberof CacheService
+   */
+  public async delete(keyOrKeys: string[] | string | undefined, ...keys: string[]): Promise<void> {
+    let deleteKeys: string[] = Array.isArray(keyOrKeys) ? keyOrKeys : keyOrKeys ? [keyOrKeys] : [];
+
+    deleteKeys = Array.from(new Set([...deleteKeys, ...keys]));
+
+    if (deleteKeys.length === 0) {
       return;
     }
 
-    keys = Array.from(new Set(keys));
-
-    await this.cacheManager.del(...keys);
+    await this.cacheManager.del(...deleteKeys);
   }
 
   public async hget<T>(key: string, field: string): Promise<T | undefined> {
@@ -123,8 +173,20 @@ export class CacheService {
     await this.cacheManager.hset(key, field, value);
   }
 
-  public async hdel(key: string, ...fields: string[]): Promise<void> {
-    await this.cacheManager.hdel(key, ...fields);
+  public async hdel(key: string, fields: string[]): Promise<void>;
+
+  public async hdel(key: string, ...fields: string[]): Promise<void>;
+
+  public async hdel(key: string, fieldOrFields: string[] | string | undefined, ...fields: string[]): Promise<void> {
+    let deleteFields: string[] = Array.isArray(fieldOrFields) ? fieldOrFields : fieldOrFields ? [fieldOrFields] : [];
+
+    deleteFields = Array.from(new Set([...deleteFields, ...fields]));
+
+    if (deleteFields.length === 0) {
+      return;
+    }
+
+    await this.cacheManager.hdel(key, ...deleteFields);
   }
 
   public async hgetall(key: string): Promise<Record<string, any>> {
