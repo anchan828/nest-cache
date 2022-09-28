@@ -34,7 +34,7 @@
     "msgpackr": "^1.7.2"
   },
   "devDependencies": {
-    "@nestjs/common": "^9.0.11",
+    "@nestjs/common": "^9.1.2",
     "@types/cache-manager": "^4.0.2",
     "ioredis-mock": "^8.2.2",
     "rxjs": "^7.5.7"
