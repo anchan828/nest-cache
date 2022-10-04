@@ -12,8 +12,8 @@ const defaultCacheOptions = {
 export function createCacheManager(): Provider {
   return {
     provide: CACHE_MANAGER,
-    useFactory: (options: CacheModuleOptions) => {
-      return caching({ ...defaultCacheOptions, ...(options || {}) });
+    useFactory: async (options: CacheModuleOptions) => {
+      return await caching({ ...defaultCacheOptions, ...(options || {}) });
     },
     inject: [CACHE_MODULE_OPTIONS],
   };

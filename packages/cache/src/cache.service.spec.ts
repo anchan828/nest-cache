@@ -2,29 +2,49 @@ import { redisStore } from "@anchan828/nest-cache-manager-ioredis";
 import { memoryStore } from "@anchan828/nest-cache-manager-memory";
 import { CACHE_MANAGER } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import { caching } from "cache-manager";
+import { Cache, caching } from "cache-manager";
 import { setTimeout } from "timers/promises";
 import { CacheService } from "./cache.service";
 import { CACHE_MODULE_OPTIONS } from "./constants";
 
-function getStore(storeName: string): string | any {
+function getCacheStore(storeName: string, port?: number): Promise<Cache<any>> {
   switch (storeName) {
     case "memory(default)":
-      return "memory";
+      return caching("memory", { ttl: 5, maxSize: 500, sizeCalculation: () => 1 });
     case "memory":
-      return memoryStore;
+      return caching(
+        memoryStore.create({
+          ttl: 5,
+          maxSize: 500,
+          sizeCalculation: () => 1,
+          port,
+          host: process.env.REDIS_HOST || "localhost",
+        }) as any,
+      );
     case "redis":
     case "redis(dragonfly)":
-      return redisStore;
+      return caching(
+        redisStore.create({
+          ttl: 5,
+          maxSize: 500,
+          sizeCalculation: () => 1,
+          port,
+          host: process.env.REDIS_HOST || "localhost",
+        }) as any,
+      );
   }
+
+  throw new Error(`Not found cache store: ${storeName}`);
 }
+
+type StoreName = "memory(default)" | "memory" | "redis" | "redis(dragonfly)";
 
 describe.each([
   { storeName: "memory(default)" },
   { storeName: "memory" },
   { storeName: "redis", port: 6379 },
   { storeName: "redis(dragonfly)", port: 6380 },
-])("store: $storeName", ({ storeName, port }) => {
+] as { storeName: StoreName; port?: number }[])("store: $storeName", ({ storeName, port }) => {
   let service: CacheService;
   beforeEach(async () => {
     const app = await Test.createTestingModule({
@@ -32,14 +52,9 @@ describe.each([
         CacheService,
         {
           provide: CACHE_MANAGER,
-          useValue: caching({
-            store: getStore(storeName),
-            ttl: 5,
-            maxSize: 500,
-            sizeCalculation: () => 1,
-            port,
-            host: process.env.REDIS_HOST || "localhost",
-          }),
+          useFactory: async () => {
+            return await getCacheStore(storeName, port);
+          },
         },
         {
           provide: CACHE_MODULE_OPTIONS,
@@ -54,7 +69,7 @@ describe.each([
 
   afterEach(async () => {
     if (storeName.includes("redis")) {
-      await service?.["cacheManager"]?.["store"]?.["client"]?.flushdb();
+      await service?.["cacheManager"]?.["store"]?.["store"]?.flushdb();
       await service?.["cacheManager"]?.["store"]?.close();
     }
   });
@@ -70,7 +85,6 @@ describe.each([
     });
 
     it("test", async () => {
-      await service.delete();
       await expect(service.get("test")).resolves.toBeUndefined();
       await service.set("test", 0);
       await expect(service.get("test")).resolves.toBe(0);
@@ -199,11 +213,13 @@ describe.each([
         "B-C": 1,
       });
 
-      await expect(service.getKeys("A-*")).resolves.toEqual(["A-A", "A-B", "A-B-C", "A-B-D", "A-C-D"]);
-      await expect(service.getKeys("A-B-*")).resolves.toEqual(["A-B-C", "A-B-D"]);
-      await expect(service.getKeys("A-*-D")).resolves.toEqual(["A-B-D", "A-C-D"]);
-      await expect(service.getKeys("*-B-*")).resolves.toEqual(["A-B-C", "A-B-D"]);
-      await expect(service.getKeys("B-*")).resolves.toEqual(["B-C"]);
+      if (storeName !== "memory(default)") {
+        await expect(service.getKeys("A-*")).resolves.toEqual(["A-A", "A-B", "A-B-C", "A-B-D", "A-C-D"]);
+        await expect(service.getKeys("A-B-*")).resolves.toEqual(["A-B-C", "A-B-D"]);
+        await expect(service.getKeys("A-*-D")).resolves.toEqual(["A-B-D", "A-C-D"]);
+        await expect(service.getKeys("*-B-*")).resolves.toEqual(["A-B-C", "A-B-D"]);
+        await expect(service.getKeys("B-*")).resolves.toEqual(["B-C"]);
+      }
     });
   });
 
@@ -219,10 +235,19 @@ describe.each([
         { key: "A-B", value: 1 },
       ]);
 
-      await expect(service.getEntries("A-*")).resolves.toEqual([
-        { key: "A-A", value: 1 },
-        { key: "A-B", value: 1 },
-      ]);
+      if (storeName === "memory(default)") {
+        // The default memory store retrieves all keys.
+        await expect(service.getEntries("A-*")).resolves.toEqual([
+          { key: "A", value: 1 },
+          { key: "A-A", value: 1 },
+          { key: "A-B", value: 1 },
+        ]);
+      } else {
+        await expect(service.getEntries("A-*")).resolves.toEqual([
+          { key: "A-A", value: 1 },
+          { key: "A-B", value: 1 },
+        ]);
+      }
     });
   });
 });

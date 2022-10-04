@@ -1,10 +1,10 @@
-import { CacheManager, patchMoreCommands } from "@anchan828/nest-cache-common";
+import { patchMoreCommands } from "@anchan828/nest-cache-common";
 import { AsyncLocalStorage } from "async_hooks";
-import { caching } from "cache-manager";
+import { Cache, caching } from "cache-manager";
 import Redis from "ioredis";
 import { pack, unpack } from "msgpackr";
 import { AsyncLocalStorageService } from "./async-local-storage.service";
-import { RedisStore, redisStore } from "./store";
+import { RedisStore } from "./store";
 describe.each([
   { name: "ioredis", client: new Redis({ db: 1, port: 6379, host: process.env.REDIS_HOST || "localhost" }) },
   {
@@ -16,30 +16,19 @@ describe.each([
 ])("RedisStore: $name", ({ client }) => {
   let asyncLocalStorage: AsyncLocalStorage<Map<string, any>>;
   let asyncLocalStorageService: AsyncLocalStorageService;
-  let store: CacheManager;
-  let redis: RedisStore;
-  let store2: CacheManager;
+  let cache: Cache<RedisStore>;
+  let cache2: Cache<RedisStore>;
+
   beforeEach(async () => {
     asyncLocalStorage = new AsyncLocalStorage();
 
-    store = caching({
-      store: redisStore,
-      client,
-      asyncLocalStorage,
-      ttl: 5,
-    } as any) as any as CacheManager;
-    redis = (store as any).store;
+    cache = await caching(new RedisStore({ client, asyncLocalStorage, ttl: 5 }));
 
-    store2 = caching({
-      store: redisStore,
-      asyncLocalStorage,
-      client: redis["client"],
-      ttl: 10,
-    } as any) as any as CacheManager;
+    cache2 = await caching(new RedisStore({ asyncLocalStorage, client: cache.store["client"], ttl: 10 }));
 
-    asyncLocalStorageService = store["store"]["asyncLocalStorage"];
+    asyncLocalStorageService = cache.store["asyncLocalStorage"];
 
-    patchMoreCommands(store);
+    patchMoreCommands(cache);
 
     if (client.status === "end") {
       await client.connect();
@@ -51,20 +40,20 @@ describe.each([
   });
 
   afterAll(async () => {
-    await redis.close();
+    await cache.store.close();
   });
 
   it("create cache instance", () => {
-    expect(store).toBeDefined();
+    expect(cache).toBeDefined();
   });
 
   it("should set cache", async () => {
     const key = "test";
     await asyncLocalStorage.run(new Map(), async () => {
       expect(asyncLocalStorageService.get(key)).toBeUndefined();
-      await expect(store.get(key)).resolves.toBeUndefined();
+      await expect(cache.get(key)).resolves.toBeUndefined();
       const date = new Date();
-      await store.set(key, {
+      await cache.set(key, {
         id: 1,
         name: "Name",
         nest: {
@@ -82,7 +71,7 @@ describe.each([
         date,
       });
 
-      await expect(store.get(key)).resolves.toEqual({
+      await expect(cache.get(key)).resolves.toEqual({
         id: 1,
         name: "Name",
         nest: {
@@ -91,7 +80,7 @@ describe.each([
         date,
       });
 
-      await expect(redis["client"].getBuffer(key)).resolves.toEqual(
+      await expect(cache.store["client"].getBuffer(key)).resolves.toEqual(
         pack({
           id: 1,
           name: "Name",
@@ -103,7 +92,7 @@ describe.each([
       );
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const buf = await redis["client"].getBuffer(key);
+      const buf = await cache.store["client"].getBuffer(key);
       expect(buf).not.toBeNull();
       if (buf != null) {
         expect(unpack(buf)).toEqual({
@@ -120,7 +109,7 @@ describe.each([
 
   it("should set cache with ttl", async () => {
     const key = "test";
-    await store.set(key, {
+    await cache.set(key, {
       id: 1,
       name: "Name",
       nest: {
@@ -128,7 +117,7 @@ describe.each([
       },
     });
 
-    await expect(store.get(key)).resolves.toEqual({
+    await expect(cache.get(key)).resolves.toEqual({
       id: 1,
       name: "Name",
       nest: {
@@ -139,40 +128,40 @@ describe.each([
 
   it("should set array", async () => {
     const key = "test";
-    await store.set(key, [1, "2", true]);
-    redis["asyncLocalStorage"].delete(key);
-    await expect(redis.get(key)).resolves.toEqual([1, "2", true]);
+    await cache.set(key, [1, "2", true]);
+    cache.store["asyncLocalStorage"].delete(key);
+    await expect(cache.store.get(key)).resolves.toEqual([1, "2", true]);
   });
 
   it("should set ttl", async () => {
     const key = "test";
-    await store.set(key, { id: 1 }, { ttl: 10 });
-    await expect(redis["client"].ttl(key)).resolves.toBeGreaterThan(5);
+    await cache.set(key, { id: 1 }, 10);
+    await expect(cache.store["client"].ttl(key)).resolves.toBeGreaterThan(5);
   });
 
   it("should set ttl: -1", async () => {
     const key = "test";
-    await store.set(key, { id: 1 }, { ttl: -1 });
-    await expect(redis["client"].ttl(key)).resolves.toEqual(-1);
+    await cache.set(key, { id: 1 }, -1);
+    await expect(cache.store["client"].ttl(key)).resolves.toEqual(-1);
   });
 
   it("should delete cache", async () => {
     await asyncLocalStorage.run(new Map(), async () => {
       const key = "test";
-      await store.set(key, key);
-      await expect(store.del(key)).resolves.toBeUndefined();
+      await cache.set(key, key);
+      await expect(cache.del(key)).resolves.toBeUndefined();
       expect(asyncLocalStorageService.get(key)).toBeUndefined();
-      await expect(store.get(key)).resolves.toBeUndefined();
+      await expect(cache.get(key)).resolves.toBeUndefined();
     });
   });
 
   it("should get cache keys", async () => {
     const keys = ["key1", "key2", "key3"];
     for (const key of keys) {
-      await store.set(key, key);
+      await cache.set(key, key);
     }
 
-    const results = await store.keys();
+    const results = await cache.store.keys();
 
     expect(results.sort()).toEqual(["key1", "key2", "key3"]);
   });
@@ -180,38 +169,34 @@ describe.each([
   it("should reset cache keys", async () => {
     const keys = ["key1", "key2", "key3"];
     for (const key of keys) {
-      await store.set(key, key);
+      await cache.set(key, key);
     }
-    let results = await store.keys();
+    let results = await cache.store.keys();
     expect(results.sort()).toEqual(["key1", "key2", "key3"]);
-    await store.reset();
-    results = await store.keys();
+    await cache.reset();
+    results = await cache.store.keys();
     expect(results.sort()).toEqual([]);
   });
 
   it("should change key prefix", async () => {
-    const store = caching({
-      store: redisStore,
-      host: process.env.REDIS_HOST || "localhost",
-      ttl: 10,
-      db: 3,
-      keyPrefix: "changed:",
-    } as any) as any as CacheManager;
+    const cache = await caching(
+      new RedisStore({ host: process.env.REDIS_HOST || "localhost", ttl: 10, db: 3, keyPrefix: "changed:" }),
+    );
     const key = "key";
-    await store.set(key, key);
-    const results = await store.keys();
+    await cache.set(key, key);
+    const results = await cache.store.keys();
     expect(results.sort()).toEqual(["changed:key"]);
 
-    const redis = (store as any).store["client"];
+    const redis = cache.store["client"];
     await redis.quit();
   });
 
   it("should mget", async () => {
     for (const key of ["key1", "key2", "key4"]) {
-      await store.set(key, `${key}:value`);
+      await cache.set(key, `${key}:value`);
     }
 
-    await expect(store.mget(...["key1", "key2", "key3", "key4"])).resolves.toEqual([
+    await expect(cache.store.mget(...["key1", "key2", "key3", "key4"])).resolves.toEqual([
       "key1:value",
       "key2:value",
       undefined,
@@ -220,50 +205,58 @@ describe.each([
   });
 
   it("should mset", async () => {
-    await store.mset("key1", "key1:value", "key2", "key2:value", "key3", "key3:value", { ttl: 1000 });
-    await expect(store.keys()).resolves.toEqual(["key1", "key2", "key3"]);
-    await expect(store.mget(...["key1", "key2", "key3"])).resolves.toEqual(["key1:value", "key2:value", "key3:value"]);
+    await cache.store.mset(
+      [
+        ["key1", "key1:value"],
+        ["key2", "key2:value"],
+        ["key3", "key3:value"],
+      ],
+      1000,
+    );
+    await expect(cache.store.keys()).resolves.toEqual(["key1", "key2", "key3"]);
+    await expect(cache.store.mget(...["key1", "key2", "key3"])).resolves.toEqual([
+      "key1:value",
+      "key2:value",
+      "key3:value",
+    ]);
   });
 
-  it("should mset with options", async () => {
-    await store.mset("key1", "key1:value", "key2", "key2:value", "key3", "key3:value", { ttl: 1234 });
-    await expect(store.keys()).resolves.toEqual(["key1", "key2", "key3"]);
-    await expect(store.mget(...["key1", "key2", "key3"])).resolves.toEqual(["key1:value", "key2:value", "key3:value"]);
-  });
-
-  it("should mset", async () => {
-    await store.mset("key1", "key1:value", "key2", "key2:value", "key3", "key3:value", { ttl: 1000 });
-    await expect(store.keys()).resolves.toEqual(["key1", "key2", "key3"]);
-    await expect(store.mget(...["key1", "key2", "key3"])).resolves.toEqual(["key1:value", "key2:value", "key3:value"]);
-  });
-
-  it("should mset with options", async () => {
-    await store.mset("key1", "key1:value", "key2", "key2:value", "key3", "key3:value", { ttl: 1234 });
-    await expect(store.keys()).resolves.toEqual(["key1", "key2", "key3"]);
-    await expect(store.mget(...["key1", "key2", "key3"])).resolves.toEqual(["key1:value", "key2:value", "key3:value"]);
+  it("should mdel", async () => {
+    await cache.store.mset(
+      [
+        ["key1", "key1:value"],
+        ["key2", "key2:value"],
+        ["key3", "key3:value"],
+      ],
+      1000,
+    );
+    await expect(cache.store.keys()).resolves.toEqual(["key1", "key2", "key3"]);
+    await expect(cache.store.mdel("key1", "key2", "key3")).resolves.toBeUndefined();
+    await expect(cache.store.keys()).resolves.toEqual([]);
+    await expect(cache.store.mget(...["key1", "key2", "key3"])).resolves.toEqual([]);
   });
 
   it("should hget", async () => {
-    await store.hset("key", "field", "value");
-    await expect(store.hget("key", "field")).resolves.toEqual("value");
+    await cache.store.hset("key", "field", "value");
+    await expect(cache.store.hget("key", "field")).resolves.toEqual("value");
   });
 
   it("should hset", async () => {
-    await store.hset("key", "field", "value");
-    await expect(store.keys()).resolves.toEqual(["key"]);
-    await expect(store.hkeys("key")).resolves.toEqual(["field"]);
-    await expect(store.hgetall("key")).resolves.toEqual({ field: "value" });
+    await cache.store.hset("key", "field", "value");
+    await expect(cache.store.keys()).resolves.toEqual(["key"]);
+    await expect(cache.store.hkeys("key")).resolves.toEqual(["field"]);
+    await expect(cache.store.hgetall("key")).resolves.toEqual({ field: "value" });
   });
 
   it("should hdel", async () => {
-    await store.hset("key", "field", "value");
-    await expect(store.hget("key", "field")).resolves.toEqual("value");
-    await expect(store.hdel("key", "field")).resolves.toBeUndefined();
-    await expect(store.hget("key", "field")).resolves.toBeUndefined();
+    await cache.store.hset("key", "field", "value");
+    await expect(cache.store.hget("key", "field")).resolves.toEqual("value");
+    await expect(cache.store.hdel("key", "field")).resolves.toBeUndefined();
+    await expect(cache.store.hget("key", "field")).resolves.toBeUndefined();
   });
 
   it("should use shared client", async () => {
-    await store.set("key", "value");
-    await expect(store2.get("key")).resolves.toEqual("value");
+    await cache.set("key", "value");
+    await expect(cache2.get("key")).resolves.toEqual("value");
   });
 });

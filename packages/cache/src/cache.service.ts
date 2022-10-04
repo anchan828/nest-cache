@@ -1,10 +1,4 @@
-import {
-  CacheManager,
-  CacheManagerSetOptions,
-  chunk,
-  isNullOrUndefined,
-  patchMoreCommands,
-} from "@anchan828/nest-cache-common";
+import { CacheManager, chunk, isNullOrUndefined, patchMoreCommands } from "@anchan828/nest-cache-common";
 import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { CacheModuleOptions } from "./cache.interface";
 import { CACHE_MODULE_OPTIONS } from "./constants";
@@ -23,6 +17,17 @@ export class CacheService {
     private readonly options: CacheModuleOptions,
   ) {
     patchMoreCommands(this.cacheManager);
+  }
+
+  /**
+   * Get cache ttl
+   *
+   * @param {string} key
+   * @return {*}  {(Promise<number | undefined>)}
+   * @memberof CacheService
+   */
+  public async ttl(key: string): Promise<number | undefined> {
+    return this.cacheManager.ttl(key);
   }
 
   /**
@@ -78,7 +83,7 @@ export class CacheService {
 
     const result: Record<string, T | undefined> = {};
 
-    const caches = await this.cacheManager.mget<T>(...getKeys);
+    const caches = (await this.cacheManager.mget(...getKeys)) as T[];
 
     for (let i = 0; i < getKeys.length; i++) {
       result[getKeys[i]] = caches[i];
@@ -94,21 +99,21 @@ export class CacheService {
    * @return {*}  {Promise<void>}
    * @memberof CacheService
    */
-  public async mset<T>(values: Record<string, T | undefined>, options?: CacheManagerSetOptions): Promise<void> {
-    const keyOrValues: (string | T)[] = [];
+  public async mset<T>(record: Record<string, T | undefined>, ttl?: number): Promise<void> {
+    const keyAndValues: [string, T][] = [];
 
-    for (const [key, value] of Object.entries(values)) {
+    for (const [key, value] of Object.entries(record)) {
       if (!isNullOrUndefined(value)) {
-        keyOrValues.push(key, value);
+        keyAndValues.push([key, value]);
       }
     }
 
-    if (keyOrValues.length === 0) {
+    if (keyAndValues.length === 0) {
       return;
     }
 
-    for (const items of chunk(keyOrValues, 2000)) {
-      await this.cacheManager.mset<T>(...items, options);
+    for (const items of chunk(keyAndValues, 2000)) {
+      await this.cacheManager.mset(items, ttl);
     }
   }
 
@@ -120,11 +125,22 @@ export class CacheService {
    * @returns {Promise<void>}
    * @memberof CacheService
    */
-  public async set(key: string, value: unknown, ttlOrOptions?: number | CacheManagerSetOptions): Promise<void> {
-    const options: CacheManagerSetOptions =
-      typeof ttlOrOptions === "number" ? { ttl: ttlOrOptions } : ttlOrOptions || {};
+  public async set(key: string, value: unknown, ttl?: number): Promise<void> {
+    if (isNullOrUndefined(value)) {
+      return;
+    }
+    await this.cacheManager.set(key, value, ttl);
+  }
 
-    await this.cacheManager.set(key, value, options);
+  /**
+   * Delete cache from store
+   *
+   * @param {string} key
+   * @return {*}  {Promise<void>}
+   * @memberof CacheService
+   */
+  public async delete(key: string): Promise<void> {
+    await this.cacheManager.del(key);
   }
 
   /**
@@ -134,7 +150,7 @@ export class CacheService {
    * @return {*}  {Promise<void>}
    * @memberof CacheService
    */
-  public async delete(keys: string[]): Promise<void>;
+  public async mdel(keys: string[]): Promise<void>;
 
   /**
    * Delete cache from store
@@ -143,7 +159,7 @@ export class CacheService {
    * @return {*}  {Promise<void>}
    * @memberof CacheService
    */
-  public async delete(...keys: string[]): Promise<void>;
+  public async mdel(...keys: string[]): Promise<void>;
 
   /**
    * Delete cache from store
@@ -153,7 +169,7 @@ export class CacheService {
    * @return {*}  {Promise<void>}
    * @memberof CacheService
    */
-  public async delete(keyOrKeys: string[] | string | undefined, ...keys: string[]): Promise<void> {
+  public async mdel(keyOrKeys: string[] | string | undefined, ...keys: string[]): Promise<void> {
     let deleteKeys: string[] = Array.isArray(keyOrKeys) ? keyOrKeys : keyOrKeys ? [keyOrKeys] : [];
 
     deleteKeys = Array.from(new Set([...deleteKeys, ...keys]));
@@ -162,7 +178,7 @@ export class CacheService {
       return;
     }
 
-    await this.cacheManager.del(...deleteKeys);
+    await this.cacheManager.mdel(...deleteKeys);
   }
 
   public async hget<T>(key: string, field: string): Promise<T | undefined> {
@@ -205,17 +221,7 @@ export class CacheService {
    * @memberof CacheService
    */
   public async getKeys(pattern?: string): Promise<string[]> {
-    let keys: string[] = [];
-
-    if (!isNullOrUndefined(pattern) && this.isMemoryStore()) {
-      keys = await this.cacheManager.keys();
-      keys = keys.filter((key) => key);
-      const inMemoryPattern = pattern.replace(new RegExp(/\*/, "g"), ".*");
-      keys = keys.filter((key) => key.match(`^${inMemoryPattern}`));
-    } else {
-      keys = await this.cacheManager.keys(pattern);
-    }
-
+    const keys = await this.cacheManager.keys(pattern);
     return keys.filter((k) => k).sort();
   }
 
@@ -229,9 +235,5 @@ export class CacheService {
   public async getEntries<T>(pattern?: string): Promise<Array<{ key: string; value: T | undefined }>> {
     const entries = await this.mget<T>(await this.getKeys(pattern));
     return Object.entries(entries).map(([key, value]) => ({ key, value }));
-  }
-
-  private isMemoryStore(): boolean {
-    return this.cacheManager?.store.name === "memory";
   }
 }

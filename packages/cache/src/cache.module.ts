@@ -54,6 +54,6 @@ export class CacheModule extends CacheConfigurableModuleClass implements OnModul
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.cacheManager?.store?.close?.();
+    // await this.cacheManager?.store?.close?.();
   }
 }

@@ -1,5 +1,5 @@
 /* eslint-disable prefer-rest-params */
-import { CacheManager, CacheManagerSetOptions, chunk, isNullOrUndefined } from "@anchan828/nest-cache-common";
+import { CacheManager, chunk, isNullOrUndefined } from "@anchan828/nest-cache-common";
 import { CacheStore, CacheStoreFactory, LiteralObject } from "@nestjs/common";
 import Redis from "ioredis";
 import { pack, unpack } from "msgpackr";
@@ -7,7 +7,7 @@ import { AsyncLocalStorageService } from "./async-local-storage.service";
 import { CACHE_STORE_NAME } from "./constants";
 import { RedisStoreArgs } from "./store.interface";
 export class RedisStore implements CacheManager {
-  private readonly client: Redis;
+  readonly store: Redis;
 
   public readonly name: string = CACHE_STORE_NAME;
 
@@ -15,26 +15,26 @@ export class RedisStore implements CacheManager {
 
   constructor(private readonly args: RedisStoreArgs) {
     this.asyncLocalStorage = new AsyncLocalStorageService(args.asyncLocalStorage);
-    this.client = args.client ?? new Redis(args);
+    this.store = args.client ?? new Redis(args);
   }
 
-  public async set<T = any>(key: string, value: T, options?: CacheManagerSetOptions): Promise<void> {
+  public async ttl(key: string): Promise<number> {
+    return this.store.ttl(key);
+  }
+
+  public async set<T = any>(key: string, value: T, ttl?: number): Promise<void> {
     if (isNullOrUndefined(value)) {
       return;
     }
 
-    let ttl: number | undefined;
-
-    if (options && !isNullOrUndefined(options.ttl)) {
-      ttl = options.ttl;
-    } else if (!isNullOrUndefined(this.args.ttl)) {
+    if (isNullOrUndefined(ttl) && !isNullOrUndefined(this.args.ttl)) {
       ttl = this.args.ttl;
     }
 
     if (!isNullOrUndefined(ttl) && ttl !== 0 && ttl !== -1) {
-      this.client.setex(key, ttl, pack(value));
+      this.store.setex(key, ttl, pack(value));
     } else if (ttl !== 0) {
-      this.client.set(key, pack(value));
+      this.store.set(key, pack(value));
     } else {
       return;
     }
@@ -54,7 +54,7 @@ export class RedisStore implements CacheManager {
       return result;
     }
 
-    const rawResult = await this.client.getBuffer(key);
+    const rawResult = await this.store.getBuffer(key);
 
     if (isNullOrUndefined(rawResult)) {
       return;
@@ -67,14 +67,10 @@ export class RedisStore implements CacheManager {
     return result;
   }
 
-  public async del(...keys: string[]): Promise<void> {
-    for (const deleteKeys of chunk(keys, 2000)) {
-      await this.client.del(...deleteKeys);
-      for (const key of deleteKeys) {
-        this.asyncLocalStorage.delete(key);
-        await this.args.hooks?.delete?.(key, undefined);
-      }
-    }
+  public async del(key: string): Promise<void> {
+    await this.store.del(key);
+    this.asyncLocalStorage.delete(key);
+    await this.args.hooks?.delete?.(key, undefined);
   }
 
   public async keys(pattern?: string): Promise<string[]> {
@@ -83,7 +79,7 @@ export class RedisStore implements CacheManager {
       pattern = "*";
     }
 
-    for await (const keys of this.client.scanStream({ match: pattern, count: 100 })) {
+    for await (const keys of this.store.scanStream({ match: pattern, count: 100 })) {
       results.push(...keys);
     }
 
@@ -94,13 +90,11 @@ export class RedisStore implements CacheManager {
     this.asyncLocalStorage.clear();
     const keys = await this.keys();
     if (keys.length !== 0) {
-      await this.del(...keys.map((key) => key.replace(new RegExp(`^${this.args.keyPrefix}`), "")));
+      await this.mdel(...keys.map((key) => key.replace(new RegExp(`^${this.args.keyPrefix}`), "")));
     }
   }
 
-  public async mget<T>(...keysOrOptions: string[]): Promise<Array<T | undefined>> {
-    const keys = keysOrOptions.filter((x): x is string => typeof x === "string") as string[];
-
+  public async mget<T>(...keys: string[]): Promise<Array<T | undefined>> {
     const map = new Map<string, T | undefined>(keys.map((key) => [key, undefined]));
 
     for (const key of keys) {
@@ -120,7 +114,7 @@ export class RedisStore implements CacheManager {
       const results: Array<Buffer | null> = [];
 
       for (const keys of chunk(notFoundKeys, 2000)) {
-        results.push(...((await this.client.mgetBuffer(...keys)) as Array<Buffer | null>));
+        results.push(...((await this.store.mgetBuffer(...keys)) as Array<Buffer | null>));
       }
 
       for (let index = 0; index < notFoundKeys.length; index++) {
@@ -139,46 +133,42 @@ export class RedisStore implements CacheManager {
     return [...map.values()];
   }
 
-  public async mset<T>(...keyOrValues: Array<string | T | CacheManagerSetOptions>): Promise<void> {
-    let options: CacheManagerSetOptions | undefined;
-
-    if (keyOrValues.length % 2 > 0 && this.isObject(keyOrValues[keyOrValues.length - 1])) {
-      options = keyOrValues[keyOrValues.length - 1] as CacheManagerSetOptions;
+  public async mset<T>(keyOrValues: [string, T][], ttl?: number): Promise<void> {
+    if (isNullOrUndefined(ttl) && !isNullOrUndefined(this.args.ttl)) {
+      ttl = this.args.ttl;
     }
 
-    for (let i = 0; i < keyOrValues.length; i += 2) {
-      if (keyOrValues.length !== i + 1) {
-        const key = keyOrValues[i] as string;
-        const value = keyOrValues[i + 1];
-        if (typeof key !== "string") {
-          continue;
-        }
+    if (ttl === 0) {
+      return;
+    }
 
-        if (isNullOrUndefined(value)) {
-          continue;
-        }
+    for (const [key, value] of keyOrValues) {
+      if (typeof key !== "string") {
+        continue;
+      }
 
-        let ttl: number | undefined;
+      if (isNullOrUndefined(value)) {
+        continue;
+      }
 
-        if (options && !isNullOrUndefined(options.ttl)) {
-          ttl = options.ttl;
-        } else if (!isNullOrUndefined(this.args.ttl)) {
-          ttl = this.args.ttl;
-        }
+      if (!isNullOrUndefined(ttl) && ttl !== -1) {
+        this.store.setex(key, ttl, pack(value));
+      } else {
+        this.store.set(key, pack(value));
+      }
 
-        if (ttl === 0) {
-          continue;
-        }
+      await this.args.hooks?.set?.(key, undefined, value, ttl);
 
-        if (!isNullOrUndefined(ttl) && ttl !== -1) {
-          this.client.setex(key, ttl, pack(value));
-        } else {
-          this.client.set(key, pack(value));
-        }
+      this.asyncLocalStorage.set(key, value);
+    }
+  }
 
-        await this.args.hooks?.set?.(key, undefined, value, ttl);
-
-        this.asyncLocalStorage.set(key, value);
+  public async mdel(...keys: string[]): Promise<void> {
+    for (const deleteKeys of chunk(keys, 2000)) {
+      await this.store.del(...deleteKeys);
+      for (const key of deleteKeys) {
+        this.asyncLocalStorage.delete(key);
+        await this.args.hooks?.delete?.(key, undefined);
       }
     }
   }
@@ -192,7 +182,7 @@ export class RedisStore implements CacheManager {
       return result;
     }
 
-    const rawResult = await this.client.hgetBuffer(key, field);
+    const rawResult = await this.store.hgetBuffer(key, field);
 
     if (isNullOrUndefined(rawResult)) {
       return;
@@ -213,7 +203,7 @@ export class RedisStore implements CacheManager {
 
     const asyncLocalStorageKey = `${key}:h:${field}`;
 
-    this.client.hset(key, field, pack(value));
+    this.store.hset(key, field, pack(value));
 
     this.asyncLocalStorage.set(asyncLocalStorageKey, value);
 
@@ -222,7 +212,7 @@ export class RedisStore implements CacheManager {
 
   public async hdel(key: string, ...fields: string[]): Promise<void> {
     for (const deleteFields of chunk(fields, 2000)) {
-      await this.client.hdel(key, ...deleteFields);
+      await this.store.hdel(key, ...deleteFields);
       for (const field of deleteFields) {
         this.asyncLocalStorage.delete(`${key}:h:${field}`);
         await this.args.hooks?.delete?.(key, field);
@@ -231,7 +221,7 @@ export class RedisStore implements CacheManager {
   }
 
   public async hgetall(key: string): Promise<Record<string, any>> {
-    const rawResults = await this.client.hgetallBuffer(key);
+    const rawResults = await this.store.hgetallBuffer(key);
     const results: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(rawResults)) {
@@ -242,19 +232,15 @@ export class RedisStore implements CacheManager {
   }
 
   public async hkeys(key: string): Promise<string[]> {
-    return await this.client.hkeys(key);
+    return await this.store.hkeys(key);
   }
 
   public async close(): Promise<void> {
-    await this.client.quit();
+    await this.store.quit();
     this.asyncLocalStorage.clear();
-  }
-
-  private isObject(value: any): value is Object {
-    return value instanceof Object && value.constructor === Object;
   }
 }
 
 export const redisStore: CacheStoreFactory = {
-  create: (args: LiteralObject): CacheStore => new RedisStore(args),
+  create: (args: LiteralObject): CacheStore => new RedisStore(args) as any,
 };
