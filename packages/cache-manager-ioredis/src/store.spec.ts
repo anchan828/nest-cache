@@ -24,7 +24,7 @@ describe.each([
 
     cache = await caching(new RedisStore({ client, asyncLocalStorage, ttl: 5 }));
 
-    cache2 = await caching(new RedisStore({ asyncLocalStorage, client: cache.store["client"], ttl: 10 }));
+    cache2 = await caching(new RedisStore({ asyncLocalStorage, client: cache.store["store"], ttl: 10 }));
 
     asyncLocalStorageService = cache.store["asyncLocalStorage"];
 
@@ -80,7 +80,7 @@ describe.each([
         date,
       });
 
-      await expect(cache.store["client"].getBuffer(key)).resolves.toEqual(
+      await expect(cache.store["store"].getBuffer(key)).resolves.toEqual(
         pack({
           id: 1,
           name: "Name",
@@ -92,7 +92,7 @@ describe.each([
       );
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const buf = await cache.store["client"].getBuffer(key);
+      const buf = await cache.store["store"].getBuffer(key);
       expect(buf).not.toBeNull();
       if (buf != null) {
         expect(unpack(buf)).toEqual({
@@ -136,13 +136,13 @@ describe.each([
   it("should set ttl", async () => {
     const key = "test";
     await cache.set(key, { id: 1 }, 10);
-    await expect(cache.store["client"].ttl(key)).resolves.toBeGreaterThan(5);
+    await expect(cache.store["store"].ttl(key)).resolves.toBeGreaterThan(5);
   });
 
   it("should set ttl: -1", async () => {
     const key = "test";
     await cache.set(key, { id: 1 }, -1);
-    await expect(cache.store["client"].ttl(key)).resolves.toEqual(-1);
+    await expect(cache.store["store"].ttl(key)).resolves.toEqual(-1);
   });
 
   it("should delete cache", async () => {
@@ -187,7 +187,7 @@ describe.each([
     const results = await cache.store.keys();
     expect(results.sort()).toEqual(["changed:key"]);
 
-    const redis = cache.store["client"];
+    const redis = cache.store["store"];
     await redis.quit();
   });
 
