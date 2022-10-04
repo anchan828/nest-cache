@@ -145,6 +145,12 @@ describe.each([
     await expect(cache.store["store"].ttl(key)).resolves.toEqual(-1);
   });
 
+  it("should get ttl", async () => {
+    const key = "test";
+    await cache.set(key, key);
+    await expect(cache.store.ttl(key)).resolves.toBeGreaterThanOrEqual(4);
+  });
+
   it("should delete cache", async () => {
     await asyncLocalStorage.run(new Map(), async () => {
       const key = "test";

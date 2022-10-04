@@ -69,6 +69,12 @@ describe("MemoryStore", () => {
     await expect(cache.get(key)).resolves.toBeUndefined();
   });
 
+  it("should get ttl", async () => {
+    const key = "test";
+    await cache.set(key, key);
+    await expect(cache.store.ttl(key)).resolves.toBeGreaterThanOrEqual(4);
+  });
+
   it("should delete cache", async () => {
     const key = "test";
     await cache.set(key, key);
@@ -126,6 +132,20 @@ describe("MemoryStore", () => {
       "key2:value",
       "key3:value",
     ]);
+  });
+
+  it("should mdel", async () => {
+    await cache.store.mset(
+      [
+        ["key1", "key1:value"],
+        ["key2", "key2:value"],
+        ["key3", "key3:value"],
+      ],
+      1000,
+    );
+    await expect(cache.store.keys()).resolves.toEqual(["key1", "key2", "key3"]);
+    await expect(cache.store.mdel(...["key1", "key2", "key3"])).resolves.toBeUndefined();
+    await expect(cache.store.keys()).resolves.toEqual([]);
   });
 
   it("should hget", async () => {
