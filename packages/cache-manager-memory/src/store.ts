@@ -24,10 +24,8 @@ export class MemoryStore implements CacheManager {
     return this.store.get(key);
   }
 
-  public async del(...keys: string[]): Promise<void> {
-    for (const key of keys) {
-      await this.store.del(key);
-    }
+  public async del(key: string): Promise<void> {
+    await this.store.del(key);
   }
 
   public async keys(pattern?: string): Promise<string[]> {
@@ -77,7 +75,7 @@ export class MemoryStore implements CacheManager {
   public async hset<T>(key: string, field: string, value: T): Promise<void> {
     let record: Record<string, any> | undefined = await this.get(key);
 
-    if (!record) {
+    if (!record || typeof record !== "object") {
       record = {};
     }
 

@@ -14,14 +14,12 @@ export const { ConfigurableModuleClass: CacheConfigurableModuleClass } =
       if (!definition.imports) {
         definition.imports = [];
       }
-      if (!definition.providers) {
-        definition.providers = [];
-      }
+
       if (!definition.exports) {
         definition.exports = [];
       }
 
-      definition.providers.push(CacheService);
+      definition.providers?.push(CacheService);
       definition.exports.push(CacheService);
 
       const options = definition.providers?.find((p: any) => p.provide && p.provide === CACHE_MODULE_OPTIONS);

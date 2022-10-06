@@ -1,4 +1,4 @@
-import { Store } from "cache-manager";
+import { Cache as InternalCache, Store } from "cache-manager";
 export type CacheManager = Store & {
   /**
    * Custom methods (named based on Redis commands)
@@ -11,3 +11,5 @@ export type CacheManager = Store & {
 
   readonly store: any;
 };
+
+export type Cache<S extends Store = Store> = InternalCache<S> & CacheManager;

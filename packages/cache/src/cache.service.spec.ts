@@ -97,6 +97,7 @@ describe.each([
       await expect(service.get("test")).resolves.toBeUndefined();
       await service.set("test", 1, 1);
       await expect(service.get("test")).resolves.toBe(1);
+      await expect(service.ttl("test")).resolves.toBeGreaterThan(0);
       await setTimeout(1100);
       await expect(service.get("test")).resolves.toBeUndefined();
     });
@@ -126,13 +127,18 @@ describe.each([
       await expect(service.mget()).resolves.toEqual({});
       await expect(service.mget([])).resolves.toEqual({});
 
+      await expect(service.mget("key1")).resolves.toEqual({
+        key1: undefined,
+      });
       await expect(service.mget(["key1", "key2"])).resolves.toEqual({
         key1: undefined,
         key2: undefined,
       });
 
       await service.set("key1", "value1");
-
+      await expect(service.mget("key1")).resolves.toEqual({
+        key1: "value1",
+      });
       await expect(service.mget(["key1", "key2"])).resolves.toEqual({
         key1: "value1",
         key2: undefined,
@@ -153,6 +159,37 @@ describe.each([
 
       await expect(service.mget(["key1", "key2"])).resolves.toEqual({
         key1: "value1",
+        key2: undefined,
+      });
+    });
+  });
+
+  describe("mdel", () => {
+    it("should delete caches", async () => {
+      await expect(service.mdel()).resolves.toBeUndefined();
+      await expect(
+        service.mset({
+          key1: "value1",
+          key2: "value2",
+        }),
+      ).resolves.toBeUndefined();
+
+      await expect(service.mget(["key1", "key2"])).resolves.toEqual({
+        key1: "value1",
+        key2: "value2",
+      });
+
+      await expect(service.mdel("key1")).resolves.toBeUndefined();
+
+      await expect(service.mget(["key1", "key2"])).resolves.toEqual({
+        key1: undefined,
+        key2: "value2",
+      });
+
+      await expect(service.mdel(["key1", "key2"])).resolves.toBeUndefined();
+
+      await expect(service.mget(["key1", "key2"])).resolves.toEqual({
+        key1: undefined,
         key2: undefined,
       });
     });

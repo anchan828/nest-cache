@@ -1,12 +1,9 @@
-import { patchMoreCommands } from "@anchan828/nest-cache-common";
-import { Cache, caching } from "cache-manager";
 import { setTimeout } from "timers/promises";
 import { memoryStore, MemoryStore } from "./store";
 describe("MemoryStore", () => {
-  let cache: Cache<MemoryStore>;
+  let cache: MemoryStore;
   beforeEach(async () => {
-    cache = await caching(memoryStore({ ttl: 5 }));
-    patchMoreCommands(cache);
+    cache = memoryStore({ ttl: 5 });
   });
 
   it("create cache instance", () => {
@@ -71,7 +68,7 @@ describe("MemoryStore", () => {
   it("should get ttl", async () => {
     const key = "test";
     await cache.set(key, key);
-    await expect(cache.store.ttl(key)).resolves.toBeGreaterThanOrEqual(4);
+    await expect(cache.ttl(key)).resolves.toBeGreaterThanOrEqual(4);
   });
 
   it("should delete cache", async () => {
@@ -86,9 +83,11 @@ describe("MemoryStore", () => {
       await cache.set(key, key);
     }
 
-    const results = await cache.store.keys();
+    const results = await cache.keys();
 
     expect(results.sort()).toEqual(["key1", "key2", "key3"]);
+
+    await expect(cache.keys("key1")).resolves.toEqual(["key1"]);
   });
 
   it("should reset cache keys", async () => {
@@ -96,10 +95,10 @@ describe("MemoryStore", () => {
     for (const key of keys) {
       await cache.set(key, key);
     }
-    let results = await cache.store.keys();
+    let results = await cache.keys();
     expect(results.sort()).toEqual(["key1", "key2", "key3"]);
     await cache.reset();
-    results = await cache.store.keys();
+    results = await cache.keys();
     expect(results.sort()).toEqual([]);
   });
 
@@ -108,7 +107,7 @@ describe("MemoryStore", () => {
       await cache.set(key, `${key}:value`);
     }
 
-    await expect(cache.store.mget(...["key1", "key2", "key3", "key4"])).resolves.toEqual([
+    await expect(cache.mget(...["key1", "key2", "key3", "key4"])).resolves.toEqual([
       "key1:value",
       "key2:value",
       undefined,
@@ -117,7 +116,7 @@ describe("MemoryStore", () => {
   });
 
   it("should mset", async () => {
-    await cache.store.mset(
+    await cache.mset(
       [
         ["key1", "key1:value"],
         ["key2", "key2:value"],
@@ -125,16 +124,12 @@ describe("MemoryStore", () => {
       ],
       1000,
     );
-    await expect(cache.store.keys()).resolves.toEqual(["key1", "key2", "key3"]);
-    await expect(cache.store.mget(...["key1", "key2", "key3"])).resolves.toEqual([
-      "key1:value",
-      "key2:value",
-      "key3:value",
-    ]);
+    await expect(cache.keys()).resolves.toEqual(["key1", "key2", "key3"]);
+    await expect(cache.mget(...["key1", "key2", "key3"])).resolves.toEqual(["key1:value", "key2:value", "key3:value"]);
   });
 
   it("should mdel", async () => {
-    await cache.store.mset(
+    await cache.mset(
       [
         ["key1", "key1:value"],
         ["key2", "key2:value"],
@@ -142,27 +137,51 @@ describe("MemoryStore", () => {
       ],
       1000,
     );
-    await expect(cache.store.keys()).resolves.toEqual(["key1", "key2", "key3"]);
-    await expect(cache.store.mdel(...["key1", "key2", "key3"])).resolves.toBeUndefined();
-    await expect(cache.store.keys()).resolves.toEqual([]);
+    await expect(cache.keys()).resolves.toEqual(["key1", "key2", "key3"]);
+    await expect(cache.mdel(...["key1", "key2", "key3"])).resolves.toBeUndefined();
+    await expect(cache.keys()).resolves.toEqual([]);
   });
 
   it("should hget", async () => {
-    await cache.store.hset("key", "field", "value");
-    await expect(cache.store.hget("key", "field")).resolves.toEqual("value");
+    await expect(cache.hget("key", "field")).resolves.toBeUndefined();
+    await cache.set("key", "value");
+    await expect(cache.hget("key", "field")).resolves.toBeUndefined();
+
+    await cache.hset("key", "field", "value");
+    await expect(cache.hget("key", "field")).resolves.toEqual("value");
   });
 
   it("should hset", async () => {
-    await cache.store.hset("key", "field", "value");
-    await expect(cache.store.keys()).resolves.toEqual(["key"]);
-    await expect(cache.store.hkeys("key")).resolves.toEqual(["field"]);
-    await expect(cache.store.hgetall("key")).resolves.toEqual({ field: "value" });
+    await cache.hset("key", "field", "value");
+    await expect(cache.keys()).resolves.toEqual(["key"]);
+    await expect(cache.hkeys("key")).resolves.toEqual(["field"]);
+    await expect(cache.hgetall("key")).resolves.toEqual({ field: "value" });
   });
 
   it("should hdel", async () => {
-    await cache.store.hset("key", "field", "value");
-    await expect(cache.store.hget("key", "field")).resolves.toEqual("value");
-    await expect(cache.store.hdel("key", "field")).resolves.toBeUndefined();
-    await expect(cache.store.hget("key", "field")).resolves.toBeUndefined();
+    await expect(cache.hdel("key", "field")).resolves.toBeUndefined();
+
+    await cache.hset("key", "field", "value");
+    await expect(cache.hget("key", "field")).resolves.toEqual("value");
+    await expect(cache.hdel("key", "field")).resolves.toBeUndefined();
+    await expect(cache.hget("key", "field")).resolves.toBeUndefined();
+  });
+  it("should hgetall", async () => {
+    await expect(cache.hgetall(undefined as any)).resolves.toEqual({});
+    await expect(cache.hgetall("key")).resolves.toEqual({});
+    await cache.hset("key", "field", "value");
+    await expect(cache.hgetall("key")).resolves.toEqual({ field: "value" });
+  });
+  it("should hkeys", async () => {
+    await expect(cache.hkeys("key")).resolves.toEqual([]);
+    await cache.hset("key", "field", "value");
+    await expect(cache.hkeys("key")).resolves.toEqual(["field"]);
+  });
+
+  it("should call reset", async () => {
+    await cache.set("key", "value");
+    await expect(cache.keys()).resolves.toEqual(["key"]);
+    await expect(cache.close()).resolves.toBeUndefined();
+    await expect(cache.keys()).resolves.toEqual([]);
   });
 });
