@@ -1,3 +1,5 @@
+import { redisStore } from "@anchan828/nest-cache-manager-ioredis";
+import { memoryStore } from "@anchan828/nest-cache-manager-memory";
 import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { ConfigModule, registerAs } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
@@ -93,22 +95,28 @@ describe("CacheModule", () => {
     });
   });
 
-  describe("use pubsub", () => {
-    it("should compile", async () => {
+  describe("use custom store", () => {
+    it("memoryStore", async () => {
       const module = await Test.createTestingModule({
-        imports: [CacheModule.register({ pubsub: { host: "localhost" } })],
+        imports: [
+          CacheModule.register({
+            store: memoryStore,
+          }),
+        ],
       }).compile();
 
       const app = await module.init();
       expect(app).toBeDefined();
       await app.close();
     });
-  });
 
-  describe("use multiCaching", () => {
-    it("should compile", async () => {
+    it("redisStore", async () => {
       const module = await Test.createTestingModule({
-        imports: [CacheModule.register([{ ttl: 10 }, { pubsub: { host: "localhost" } }])],
+        imports: [
+          CacheModule.register({
+            store: redisStore,
+          }),
+        ],
       }).compile();
 
       const app = await module.init();

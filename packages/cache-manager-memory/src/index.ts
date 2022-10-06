@@ -1,2 +1,1 @@
-export { memoryStore } from "./store";
-export { MemoryStoreArgs } from "./store.interface";
+export { memoryStore, MemoryStore } from "./store";

@@ -1,2 +1,2 @@
-export { redisStore } from "./store";
+export { RedisStore, redisStore } from "./store";
 export { RedisStoreArgs } from "./store.interface";

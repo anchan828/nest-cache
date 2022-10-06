@@ -31,18 +31,17 @@
   },
   "dependencies": {
     "@anchan828/nest-cache-common": "^1.2.11",
-    "cache-manager": "^4.1.0"
+    "cache-manager": "^5.0.0"
   },
   "devDependencies": {
     "@anchan828/nest-cache-manager-ioredis": "^1.2.11",
     "@anchan828/nest-cache-manager-memory": "^1.2.11",
-    "@nestjs/common": "^9.1.2",
+    "@nestjs/common": "^9.1.4",
     "@nestjs/config": "^2.2.0",
-    "@types/cache-manager": "^4.0.2",
     "rxjs": "^7.5.7"
   },
   "peerDependencies": {
-    "@nestjs/common": "^8.0.0 || ^9.0.0"
+    "@nestjs/common": "^9.1.4"
   },
   "volta": {
     "extends": "../../package.json"

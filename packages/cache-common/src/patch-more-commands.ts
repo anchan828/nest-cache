@@ -2,7 +2,21 @@ export function patchMoreCommands(cacheManager: any): void {
   if (!cacheManager.store) {
     return;
   }
-  patchCommands(cacheManager, ["hget", "hset", "hdel", "hgetall", "hkeys"]);
+  patchCommands(cacheManager, [
+    "get",
+    "set",
+    "del",
+    "ttl",
+    "keys",
+    "mget",
+    "mset",
+    "mdel",
+    "hget",
+    "hset",
+    "hdel",
+    "hgetall",
+    "hkeys",
+  ]);
 }
 
 function patchCommands(self: any, commands: string[]): void {
@@ -10,10 +24,6 @@ function patchCommands(self: any, commands: string[]): void {
     if (typeof self.store[command] === "function") {
       self[command] = self.store[command].bind(self.store);
     } else {
-      const storeName = typeof self.store === "string" ? self.store : self.store.name;
-      console.warn(
-        `This store '${storeName}' does not support ${command}. Note that calling it will not work correctly.`,
-      );
       self[command] = () => Promise.resolve();
     }
   }

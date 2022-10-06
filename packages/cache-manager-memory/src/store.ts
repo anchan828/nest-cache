@@ -1,49 +1,61 @@
 /* eslint-disable prefer-rest-params */
-import { CacheManager, CacheManagerSetOptions } from "@anchan828/nest-cache-common";
-import { CacheStore, CacheStoreFactory, LiteralObject } from "@nestjs/common";
-import { caching } from "cache-manager";
+import { CacheManager } from "@anchan828/nest-cache-common";
+import { MemoryConfig, memoryStore as internalMemoryStore, MemoryStore as InternalMemoryStore } from "cache-manager";
 import { CACHE_STORE_NAME } from "./constants";
-import { MemoryStoreArgs } from "./store.interface";
 
 export class MemoryStore implements CacheManager {
   public readonly name: string = CACHE_STORE_NAME;
 
-  private readonly memoryCache: CacheManager;
+  readonly store: InternalMemoryStore;
 
-  constructor(args: MemoryStoreArgs) {
-    this.memoryCache = caching({
-      ...args,
-      store: "memory",
-    }) as unknown as CacheManager;
+  constructor(args: MemoryConfig) {
+    this.store = internalMemoryStore(args);
   }
 
-  public async set<T = any>(key: string, value: T, options?: CacheManagerSetOptions): Promise<void> {
-    return this.memoryCache.set(key, value, options);
+  public async ttl(key: string): Promise<number> {
+    return this.store.ttl(key);
+  }
+
+  public async set<T = any>(key: string, value: T, ttl?: number): Promise<void> {
+    return this.store.set(key, value, ttl);
   }
 
   public async get<T>(key: string): Promise<T | undefined> {
-    return this.memoryCache.get(key);
+    return this.store.get(key);
   }
 
-  public async del(...keys: string[]): Promise<void> {
-    return this.memoryCache.del(...keys);
+  public async del(key: string): Promise<void> {
+    await this.store.del(key);
   }
 
   public async keys(pattern?: string): Promise<string[]> {
-    const keys = await this.memoryCache.keys(pattern);
+    let keys = await this.store.keys(pattern);
+
+    if (pattern) {
+      keys = keys.filter((key) => key);
+      const inMemoryPattern = pattern.replace(new RegExp(/\*/, "g"), ".*");
+      keys = keys.filter((key) => key.match(`^${inMemoryPattern}`));
+    }
+
     return keys.sort();
   }
 
   public async reset(): Promise<void> {
-    return this.memoryCache.reset();
+    return this.store.reset();
   }
 
-  public async mget<T>(...keysOrOptions: string[]): Promise<Array<T | undefined>> {
-    return this.memoryCache.mget(...keysOrOptions);
+  public async mget<T>(...keys: string[]): Promise<Array<T | undefined>> {
+    return this.store.mget(...keys) as unknown as Array<T | undefined>;
   }
 
-  public async mset<T>(...keyOrValues: [...(string | T)[], CacheManagerSetOptions | undefined]): Promise<void> {
-    return this.memoryCache.mset(...keyOrValues);
+  public async mset<T>(keyOrValues: [string, T][], ttl?: number): Promise<void> {
+    return this.store.mset(keyOrValues, ttl);
+  }
+
+  public async mdel(...keys: string[]): Promise<void> {
+    for (const key of keys) {
+      await this.store.del(key);
+    }
   }
 
   public async hget<T>(key: string, field: string): Promise<T | undefined> {
@@ -63,7 +75,7 @@ export class MemoryStore implements CacheManager {
   public async hset<T>(key: string, field: string, value: T): Promise<void> {
     let record: Record<string, any> | undefined = await this.get(key);
 
-    if (!record) {
+    if (!record || typeof record !== "object") {
       record = {};
     }
 
@@ -102,10 +114,10 @@ export class MemoryStore implements CacheManager {
   }
 
   public async close(): Promise<void> {
-    this.memoryCache.reset();
+    this.store.reset();
   }
 }
 
-export const memoryStore: CacheStoreFactory = {
-  create: (args: LiteralObject): CacheStore => new MemoryStore(args as MemoryStoreArgs),
-};
+export function memoryStore(args: MemoryConfig): MemoryStore {
+  return new MemoryStore(args);
+}
