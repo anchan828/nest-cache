@@ -1,12 +1,11 @@
 import { patchMoreCommands } from "@anchan828/nest-cache-common";
 import { Cache, caching } from "cache-manager";
 import { setTimeout } from "timers/promises";
-import { MemoryStore } from "./store";
-
+import { memoryStore, MemoryStore } from "./store";
 describe("MemoryStore", () => {
   let cache: Cache<MemoryStore>;
   beforeEach(async () => {
-    cache = await caching(new MemoryStore({ ttl: 5 }));
+    cache = await caching(memoryStore({ ttl: 5 }));
     patchMoreCommands(cache);
   });
 

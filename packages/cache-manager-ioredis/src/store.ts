@@ -1,6 +1,5 @@
 /* eslint-disable prefer-rest-params */
 import { CacheManager, chunk, isNullOrUndefined } from "@anchan828/nest-cache-common";
-import { CacheStore, CacheStoreFactory, LiteralObject } from "@nestjs/common";
 import Redis from "ioredis";
 import { pack, unpack } from "msgpackr";
 import { AsyncLocalStorageService } from "./async-local-storage.service";
@@ -241,6 +240,6 @@ export class RedisStore implements CacheManager {
   }
 }
 
-export const redisStore: CacheStoreFactory = {
-  create: (args: LiteralObject): CacheStore => new RedisStore(args) as any,
-};
+export function redisStore(args: RedisStoreArgs): RedisStore {
+  return new RedisStore(args);
+}

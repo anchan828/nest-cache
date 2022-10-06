@@ -1,5 +1,6 @@
-import { redisStore } from "@anchan828/nest-cache-manager-ioredis";
-import { memoryStore } from "@anchan828/nest-cache-manager-memory";
+import { RedisStore } from "@anchan828/nest-cache-manager-ioredis";
+import { MemoryStore } from "@anchan828/nest-cache-manager-memory";
+
 import { CACHE_MANAGER } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { Cache, caching } from "cache-manager";
@@ -13,24 +14,20 @@ function getCacheStore(storeName: string, port?: number): Promise<Cache<any>> {
       return caching("memory", { ttl: 5, maxSize: 500, sizeCalculation: () => 1 });
     case "memory":
       return caching(
-        memoryStore.create({
+        new MemoryStore({
           ttl: 5,
           maxSize: 500,
           sizeCalculation: () => 1,
-          port,
-          host: process.env.REDIS_HOST || "localhost",
         }) as any,
       );
     case "redis":
     case "redis(dragonfly)":
       return caching(
-        redisStore.create({
+        new RedisStore({
           ttl: 5,
-          maxSize: 500,
-          sizeCalculation: () => 1,
           port,
           host: process.env.REDIS_HOST || "localhost",
-        }) as any,
+        }),
       );
   }
 

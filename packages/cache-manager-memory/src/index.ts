@@ -1,1 +1,1 @@
-export { memoryStore } from "./store";
+export { memoryStore, MemoryStore } from "./store";

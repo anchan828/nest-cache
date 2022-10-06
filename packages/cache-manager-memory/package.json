@@ -31,13 +31,6 @@
     "@anchan828/nest-cache-common": "^1.2.11",
     "cache-manager": "^5.0.0"
   },
-  "devDependencies": {
-    "@nestjs/common": "^9.1.4",
-    "rxjs": "^7.5.7"
-  },
-  "peerDependencies": {
-    "@nestjs/common": "^9.1.4"
-  },
   "volta": {
     "extends": "../../package.json"
   }

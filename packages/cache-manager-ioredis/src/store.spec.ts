@@ -4,7 +4,7 @@ import { Cache, caching } from "cache-manager";
 import Redis from "ioredis";
 import { pack, unpack } from "msgpackr";
 import { AsyncLocalStorageService } from "./async-local-storage.service";
-import { RedisStore } from "./store";
+import { RedisStore, redisStore } from "./store";
 describe.each([
   { name: "ioredis", client: new Redis({ db: 1, port: 6379, host: process.env.REDIS_HOST || "localhost" }) },
   {
@@ -22,9 +22,9 @@ describe.each([
   beforeEach(async () => {
     asyncLocalStorage = new AsyncLocalStorage();
 
-    cache = await caching(new RedisStore({ client, asyncLocalStorage, ttl: 5 }));
+    cache = await caching(redisStore({ client, asyncLocalStorage, ttl: 5 }));
 
-    cache2 = await caching(new RedisStore({ asyncLocalStorage, client: cache.store["store"], ttl: 10 }));
+    cache2 = await caching(redisStore({ asyncLocalStorage, client: cache.store["store"], ttl: 10 }));
 
     asyncLocalStorageService = cache.store["asyncLocalStorage"];
 
@@ -186,7 +186,7 @@ describe.each([
 
   it("should change key prefix", async () => {
     const cache = await caching(
-      new RedisStore({ host: process.env.REDIS_HOST || "localhost", ttl: 10, db: 3, keyPrefix: "changed:" }),
+      redisStore({ host: process.env.REDIS_HOST || "localhost", ttl: 10, db: 3, keyPrefix: "changed:" }),
     );
     const key = "key";
     await cache.set(key, key);

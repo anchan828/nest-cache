@@ -1,6 +1,5 @@
 /* eslint-disable prefer-rest-params */
 import { CacheManager } from "@anchan828/nest-cache-common";
-import { CacheStore, CacheStoreFactory } from "@nestjs/common";
 import { MemoryConfig, memoryStore as internalMemoryStore, MemoryStore as InternalMemoryStore } from "cache-manager";
 import { CACHE_STORE_NAME } from "./constants";
 
@@ -9,7 +8,7 @@ export class MemoryStore implements CacheManager {
 
   readonly store: InternalMemoryStore;
 
-  constructor(private readonly args: MemoryConfig) {
+  constructor(args: MemoryConfig) {
     this.store = internalMemoryStore(args);
   }
 
@@ -121,6 +120,6 @@ export class MemoryStore implements CacheManager {
   }
 }
 
-export const memoryStore: CacheStoreFactory = {
-  create: (args: MemoryConfig): CacheStore => new MemoryStore(args) as any,
-};
+export function memoryStore(args: MemoryConfig): MemoryStore {
+  return new MemoryStore(args);
+}
