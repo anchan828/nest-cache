@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@anchan828/nest-cache-common": "^2.0.3",
-    "cache-manager": "^5.0.1",
+    "cache-manager": "^5.1.1",
     "ioredis": "^5.2.3",
     "msgpackr": "^1.7.2"
   },
