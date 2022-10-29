@@ -36,12 +36,12 @@
   "devDependencies": {
     "@anchan828/nest-cache-manager-ioredis": "^2.0.3",
     "@anchan828/nest-cache-manager-memory": "^2.0.3",
-    "@nestjs/common": "^9.1.4",
+    "@nestjs/common": "^9.1.6",
     "@nestjs/config": "^2.2.0",
     "rxjs": "^7.5.7"
   },
   "peerDependencies": {
-    "@nestjs/common": "^9.1.4"
+    "@nestjs/common": "^9.1.6"
   },
   "volta": {
     "extends": "../../package.json"
