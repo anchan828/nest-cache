@@ -114,7 +114,7 @@ export class MemoryStore implements CacheManager {
   }
 
   public async close(): Promise<void> {
-    this.store.reset();
+    await this.store.reset();
   }
 }
 

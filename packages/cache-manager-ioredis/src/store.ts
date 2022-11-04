@@ -38,9 +38,9 @@ export class RedisStore implements CacheManager {
     }
 
     if (!isNullOrUndefined(ttl) && ttl !== 0 && ttl !== -1) {
-      this.store.setex(key, ttl, pack(value));
+      await this.store.setex(key, ttl, pack(value));
     } else if (ttl !== 0) {
-      this.store.set(key, pack(value));
+      await this.store.set(key, pack(value));
     } else {
       return;
     }
@@ -159,9 +159,9 @@ export class RedisStore implements CacheManager {
       }
 
       if (!isNullOrUndefined(ttl) && ttl !== -1) {
-        this.store.setex(key, ttl, pack(value));
+        await this.store.setex(key, ttl, pack(value));
       } else {
-        this.store.set(key, pack(value));
+        await this.store.set(key, pack(value));
       }
 
       await this.args.hooks?.set?.(key, undefined, value, ttl);
@@ -217,7 +217,7 @@ export class RedisStore implements CacheManager {
 
     const asyncLocalStorageKey = `${key}:h:${field}`;
 
-    this.store.hset(key, field, pack(value));
+    await this.store.hset(key, field, pack(value));
 
     this.asyncLocalStorage.set(asyncLocalStorageKey, value);
 
