@@ -38,7 +38,7 @@
     "@anchan828/nest-cache-manager-memory": "^2.0.9",
     "@nestjs/common": "^9.1.6",
     "@nestjs/config": "^2.2.0",
-    "rxjs": "^7.5.7"
+    "rxjs": "^7.6.0"
   },
   "peerDependencies": {
     "@nestjs/common": "^9.1.6"
