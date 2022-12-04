@@ -104,9 +104,7 @@ export class RedisStore implements CacheManager {
   }
 
   public async mget<T>(...keys: string[]): Promise<Array<T | undefined>> {
-    const map = new Map<string, T | undefined>(
-      keys.filter((key) => typeof key === "string").map((key) => [key, undefined]),
-    );
+    const map = new Map<string, T | undefined>(keys.map((key) => [key, undefined]));
 
     for (const key of map.keys()) {
       const result = this.asyncLocalStorage.get(key);
@@ -171,10 +169,7 @@ export class RedisStore implements CacheManager {
   }
 
   public async mdel(...keys: string[]): Promise<void> {
-    for (const deleteKeys of chunk(
-      keys.filter((key) => typeof key === "string"),
-      2000,
-    )) {
+    for (const deleteKeys of chunk(keys, 2000)) {
       await this.store.del(...deleteKeys);
       for (const key of deleteKeys) {
         this.asyncLocalStorage.delete(key);
@@ -228,10 +223,7 @@ export class RedisStore implements CacheManager {
     if (typeof key !== "string") {
       return;
     }
-    for (const deleteFields of chunk(
-      fields.filter((field) => typeof field === "string"),
-      2000,
-    )) {
+    for (const deleteFields of chunk(fields, 2000)) {
       await this.store.hdel(key, ...deleteFields);
       for (const field of deleteFields) {
         this.asyncLocalStorage.delete(`${key}:h:${field}`);
