@@ -1,7 +1,7 @@
+import { AsyncLocalStorageService } from "@anchan828/nest-cache-common";
 import { AsyncLocalStorage } from "async_hooks";
 import Redis from "ioredis";
 import { pack, unpack } from "msgpackr";
-import { AsyncLocalStorageService } from "./async-local-storage.service";
 import { RedisStore, redisStore } from "./store";
 describe.each([
   { name: "ioredis", client: new Redis({ db: 1, port: 6379, host: process.env.REDIS_HOST || "localhost" }) },

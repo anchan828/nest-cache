@@ -1,5 +1,5 @@
 {
-  "name": "@anchan828/nest-cache",
+  "name": "@anchan828/nest-cache-manager-async-local-storage",
   "version": "2.0.16",
   "description": "",
   "homepage": "https://github.com/anchan828/nest-cache#readme",
@@ -20,11 +20,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "copy:license": "cp ../../LICENSE ./",
-    "copy:readme": "cp ../../README.md ./",
     "lint": "TIMING=1 eslint --ignore-path ../../.eslintignore '**/*.ts'",
     "lint:fix": "npm run lint -- --fix",
-    "prepublishOnly": "npm run copy:license && npm run copy:readme",
-    "test": "jest --coverage --runInBand",
+    "test": "jest --coverage --runInBand --detectOpenHandles",
     "test:debug": "node --inspect-brk ../../node_modules/jest/bin/jest --runInBand --logHeapUsage",
     "test:watch": "npm run test -- --watch",
     "watch": "tsc --watch"
@@ -32,17 +30,6 @@
   "dependencies": {
     "@anchan828/nest-cache-common": "^2.0.16",
     "cache-manager": "^5.1.4"
-  },
-  "devDependencies": {
-    "@anchan828/nest-cache-manager-async-local-storage": "^2.0.16",
-    "@anchan828/nest-cache-manager-ioredis": "^2.0.16",
-    "@anchan828/nest-cache-manager-memory": "^2.0.16",
-    "@nestjs/common": "^9.2.1",
-    "@nestjs/config": "^2.2.0",
-    "rxjs": "^7.8.0"
-  },
-  "peerDependencies": {
-    "@nestjs/common": "^9.2.1"
   },
   "volta": {
     "extends": "../../package.json"
