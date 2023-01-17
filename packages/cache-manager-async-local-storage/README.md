@@ -19,9 +19,15 @@ $ npm i --save @anchan828/nest-cache-manager-async-local-storage
 import { asyncLocalStorageStore } from "@anchan828/nest-cache-manager-async-local-storage";
 import { caching } from "cache-manager";
 
-caching({
+const asyncLocalStorage = new AsyncLocalStorage<Map<string, any>>();
+
+const cache = caching({
   store: asyncLocalStorageStore,
-  asyncLocalStorage: new AsyncLocalStorage<Map<string, any>>(),
+  asyncLocalStorage,
+});
+
+asyncLocalStorage.run(new Map<string, any>(), () => {
+  cache.get("key");
 });
 ```
 
