@@ -1,8 +1,7 @@
 /* eslint-disable prefer-rest-params */
-import { CacheManager, chunk, isNullOrUndefined } from "@anchan828/nest-cache-common";
+import { AsyncLocalStorageService, CacheManager, chunk, isNullOrUndefined } from "@anchan828/nest-cache-common";
 import Redis from "ioredis";
 import { pack, unpack } from "msgpackr";
-import { AsyncLocalStorageService } from "./async-local-storage.service";
 import { CACHE_STORE_NAME } from "./constants";
 import { RedisStoreArgs } from "./store.interface";
 export class RedisStore implements CacheManager {

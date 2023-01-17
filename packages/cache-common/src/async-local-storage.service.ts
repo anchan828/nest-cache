@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "async_hooks";
-import { ASYNC_LOCAL_STORAGE_PREFIX } from "./constants";
+export const ASYNC_LOCAL_STORAGE_PREFIX = "nest-cache:";
 
 function clone<T = any>(value: T): T {
   if (typeof value === "object") {
@@ -23,6 +23,24 @@ export class AsyncLocalStorageService {
 
   public delete<T = any>(key: string): void {
     this.getStore<T>()?.delete(this.keyPrefix(key));
+  }
+
+  public keys(pattern?: string): string[] {
+    const store = this.getStore();
+
+    let keys = Array.from(store?.keys() || []);
+
+    keys = keys
+      .filter((key) => key)
+      .filter((key) => key && key.startsWith(ASYNC_LOCAL_STORAGE_PREFIX))
+      .map((key) => key.replace(ASYNC_LOCAL_STORAGE_PREFIX, ""));
+
+    if (pattern) {
+      const regexpPattern = pattern.replace(new RegExp(/\*/, "g"), ".*");
+      keys = keys.filter((key) => key.match(`^${regexpPattern}`));
+    }
+
+    return keys;
   }
 
   public clear(): void {

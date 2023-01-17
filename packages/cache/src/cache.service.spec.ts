@@ -1,12 +1,15 @@
+import { AsyncLocalStorageStore } from "@anchan828/nest-cache-manager-async-local-storage";
 import { RedisStore } from "@anchan828/nest-cache-manager-ioredis";
 import { MemoryStore } from "@anchan828/nest-cache-manager-memory";
-
 import { CACHE_MANAGER } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
+import { AsyncLocalStorage } from "async_hooks";
 import { Cache, caching } from "cache-manager";
 import { setTimeout } from "timers/promises";
 import { CacheService } from "./cache.service";
 import { CACHE_MODULE_OPTIONS } from "./constants";
+
+const asyncLocalStorage = new AsyncLocalStorage<Map<string, any>>();
 
 function getCacheStore(storeName: string, port?: number): Promise<Cache<any>> {
   switch (storeName) {
@@ -29,18 +32,21 @@ function getCacheStore(storeName: string, port?: number): Promise<Cache<any>> {
           host: process.env.REDIS_HOST || "localhost",
         }),
       );
+    case "async-local-storage":
+      return caching(new AsyncLocalStorageStore({ asyncLocalStorage }));
   }
 
   throw new Error(`Not found cache store: ${storeName}`);
 }
 
-type StoreName = "memory(default)" | "memory" | "redis" | "redis(dragonfly)";
+type StoreName = "memory(default)" | "memory" | "redis" | "redis(dragonfly)" | "async-local-storage";
 
 describe.each([
   { storeName: "memory(default)" },
   { storeName: "memory" },
   { storeName: "redis", port: 6379 },
   { storeName: "redis(dragonfly)", port: 6380 },
+  { storeName: "async-local-storage" },
 ] as { storeName: StoreName; port?: number }[])("store: $storeName", ({ storeName, port }) => {
   let service: CacheService;
   beforeEach(async () => {
@@ -62,6 +68,8 @@ describe.each([
 
     expect(app).toBeDefined();
     service = app.get<CacheService>(CacheService);
+
+    asyncLocalStorage.enterWith(new Map());
   });
 
   afterEach(async () => {
@@ -69,11 +77,15 @@ describe.each([
       await service?.["cacheManager"]?.["store"]?.["store"]?.flushdb();
       await service?.["cacheManager"]?.["store"]?.close();
     }
+
+    await new Promise<void>((resolve) => asyncLocalStorage.exit(() => resolve()));
+    asyncLocalStorage.getStore()?.clear();
   });
 
   it("should be defined", () => {
     expect(service).toBeDefined();
   });
+
   describe("get/set/delete", () => {
     it("should be defined", () => {
       expect(service.get).toBeDefined();
@@ -94,6 +106,10 @@ describe.each([
     });
 
     it("set ttl", async () => {
+      if (storeName === "async-local-storage") {
+        return;
+      }
+
       await expect(service.get("test")).resolves.toBeUndefined();
       await service.set("test", 1, 1);
       await expect(service.get("test")).resolves.toBe(1);
