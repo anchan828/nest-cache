@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@anchan828/nest-cache-common": "^2.0.25",
-    "cache-manager": "^5.1.6"
+    "cache-manager": "^5.2.0"
   },
   "volta": {
     "extends": "../../package.json"
