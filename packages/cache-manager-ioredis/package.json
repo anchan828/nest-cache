@@ -34,7 +34,7 @@
     "msgpackr": "^1.8.5"
   },
   "devDependencies": {
-    "ioredis-mock": "^8.2.7"
+    "ioredis-mock": "^8.4.0"
   },
   "volta": {
     "extends": "../../package.json"
