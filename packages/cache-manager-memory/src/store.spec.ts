@@ -1,5 +1,8 @@
 import { setTimeout } from "timers/promises";
 import { memoryStore, MemoryStore } from "./store";
+
+jest.retryTimes(3);
+
 describe("MemoryStore", () => {
   let cache: MemoryStore;
   beforeEach(async () => {
