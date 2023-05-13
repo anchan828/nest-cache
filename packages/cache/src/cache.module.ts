@@ -1,5 +1,6 @@
 import { CacheManager } from "@anchan828/nest-cache-common";
-import { CACHE_MANAGER, ConfigurableModuleBuilder, Global, Inject, Module, OnModuleDestroy } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { ConfigurableModuleBuilder, Global, Inject, Module, OnModuleDestroy } from "@nestjs/common";
 import { CacheModuleOptions } from "./cache.interface";
 import { createCacheManager } from "./cache.provider";
 import { CacheService } from "./cache.service";

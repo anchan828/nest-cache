@@ -1,4 +1,5 @@
-import { CACHE_MANAGER, Provider } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Provider } from "@nestjs/common";
 import { Cache, caching } from "cache-manager";
 import { CacheModuleOptions } from "./cache.interface";
 import { CACHE_MODULE_OPTIONS } from "./constants";
