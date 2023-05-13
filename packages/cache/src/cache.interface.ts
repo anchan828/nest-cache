@@ -1,4 +1,4 @@
-import { CacheModuleOptions as NestCacheModuleOptions } from "@nestjs/common";
+import { CacheModuleOptions as NestCacheModuleOptions } from "@nestjs/cache-manager";
 
 export type CacheModuleOptions<T = any> = NestCacheModuleOptions & T;
 

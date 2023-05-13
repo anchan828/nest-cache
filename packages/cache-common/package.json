@@ -28,12 +28,7 @@
     "watch": "tsc --watch"
   },
   "devDependencies": {
-    "@nestjs/common": "^9.4.0",
-    "cache-manager": "^5.2.1",
-    "rxjs": "^7.8.1"
-  },
-  "peerDependencies": {
-    "@nestjs/common": "^9.4.0"
+    "cache-manager": "^5.2.1"
   },
   "volta": {
     "extends": "../../package.json"

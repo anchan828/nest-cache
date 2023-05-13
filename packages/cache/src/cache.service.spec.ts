@@ -1,7 +1,7 @@
 import { AsyncLocalStorageStore } from "@anchan828/nest-cache-manager-async-local-storage";
 import { RedisStore } from "@anchan828/nest-cache-manager-ioredis";
 import { MemoryStore } from "@anchan828/nest-cache-manager-memory";
-import { CACHE_MANAGER } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Test } from "@nestjs/testing";
 import { AsyncLocalStorage } from "async_hooks";
 import { Cache, caching } from "cache-manager";

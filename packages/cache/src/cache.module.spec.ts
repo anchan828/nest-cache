@@ -1,6 +1,7 @@
 import { redisStore } from "@anchan828/nest-cache-manager-ioredis";
 import { memoryStore } from "@anchan828/nest-cache-manager-memory";
-import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Inject, Injectable } from "@nestjs/common";
 import { ConfigModule, registerAs } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
 import { CacheModuleOptions, CacheModuleOptionsFactory } from "./cache.interface";

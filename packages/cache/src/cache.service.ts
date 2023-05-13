@@ -1,5 +1,6 @@
 import { CacheManager, chunk, isNullOrUndefined, patchMoreCommands } from "@anchan828/nest-cache-common";
-import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Inject, Injectable } from "@nestjs/common";
 import { CacheModuleOptions } from "./cache.interface";
 import { CACHE_MODULE_OPTIONS } from "./constants";
 /**
