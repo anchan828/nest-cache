@@ -38,7 +38,7 @@
     "@anchan828/nest-cache-manager-ioredis": "^2.0.29",
     "@anchan828/nest-cache-manager-memory": "^2.0.29",
     "@nestjs/cache-manager": "^1.0.0",
-    "@nestjs/common": "^9.4.0",
+    "@nestjs/common": "^9.4.2",
     "@nestjs/config": "^2.3.2",
     "rxjs": "^7.8.1"
   },
