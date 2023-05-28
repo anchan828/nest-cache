@@ -1,6 +1,6 @@
 {
   "name": "@anchan828/nest-cache",
-  "version": "2.0.29",
+  "version": "2.0.30",
   "description": "",
   "homepage": "https://github.com/anchan828/nest-cache#readme",
   "bugs": {
@@ -30,13 +30,13 @@
     "watch": "tsc --watch"
   },
   "dependencies": {
-    "@anchan828/nest-cache-common": "^2.0.29",
+    "@anchan828/nest-cache-common": "^2.0.30",
     "cache-manager": "^5.2.1"
   },
   "devDependencies": {
-    "@anchan828/nest-cache-manager-async-local-storage": "^2.0.29",
-    "@anchan828/nest-cache-manager-ioredis": "^2.0.29",
-    "@anchan828/nest-cache-manager-memory": "^2.0.29",
+    "@anchan828/nest-cache-manager-async-local-storage": "^2.0.30",
+    "@anchan828/nest-cache-manager-ioredis": "^2.0.30",
+    "@anchan828/nest-cache-manager-memory": "^2.0.30",
     "@nestjs/cache-manager": "^1.0.0",
     "@nestjs/common": "^9.4.0",
     "@nestjs/config": "^2.3.2",
