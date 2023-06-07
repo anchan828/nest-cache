@@ -31,7 +31,7 @@
     "@anchan828/nest-cache-common": "^2.0.31",
     "cache-manager": "^5.2.1",
     "ioredis": "^5.3.2",
-    "msgpackr": "^1.9.4"
+    "msgpackr": "^1.9.5"
   },
   "devDependencies": {
     "ioredis-mock": "^8.7.0"
