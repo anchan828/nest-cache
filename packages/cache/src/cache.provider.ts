@@ -2,12 +2,7 @@ import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Provider } from "@nestjs/common";
 import { Cache, caching } from "cache-manager";
 import { CacheModuleOptions } from "./cache.interface";
-import { CACHE_MODULE_OPTIONS } from "./constants";
-
-const defaultCacheOptions = {
-  ttl: 5,
-  max: 100,
-};
+import { CACHE_MODULE_OPTIONS, DEFAULT_CACHE_OPTIONS } from "./constants";
 
 export function createCacheManager(): Provider {
   return {
@@ -21,7 +16,7 @@ export function createCacheManager(): Provider {
 
 async function createCacheStore(options: Record<string, any>): Promise<Cache<any>> {
   return caching(options.store ?? "memory", {
-    ...defaultCacheOptions,
+    ...DEFAULT_CACHE_OPTIONS,
     ...options,
   });
 }

@@ -1,6 +1,6 @@
 /* eslint-disable prefer-rest-params */
 import { CacheManager } from "@anchan828/nest-cache-common";
-import { MemoryConfig, memoryStore as internalMemoryStore, MemoryStore as InternalMemoryStore } from "cache-manager";
+import { MemoryStore as InternalMemoryStore, MemoryConfig, memoryStore as internalMemoryStore } from "cache-manager";
 import { CACHE_STORE_NAME } from "./constants";
 
 export class MemoryStore implements CacheManager {
@@ -33,7 +33,7 @@ export class MemoryStore implements CacheManager {
 
     if (pattern) {
       keys = keys.filter((key) => key);
-      const inMemoryPattern = pattern.replace(new RegExp(/\*/, "g"), ".*");
+      const inMemoryPattern = pattern.replace(/\*/g, ".*");
       keys = keys.filter((key) => key.match(`^${inMemoryPattern}`));
     }
 

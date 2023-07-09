@@ -31,7 +31,6 @@ export class AsyncLocalStorageService {
     let keys = Array.from(store?.keys() || []);
 
     keys = keys
-      .filter((key) => key)
       .filter((key) => key && key.startsWith(ASYNC_LOCAL_STORAGE_PREFIX))
       .map((key) => key.replace(ASYNC_LOCAL_STORAGE_PREFIX, ""));
 

@@ -1,8 +1,6 @@
 import { CacheManager, chunk, isNullOrUndefined, patchMoreCommands } from "@anchan828/nest-cache-common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Inject, Injectable } from "@nestjs/common";
-import { CacheModuleOptions } from "./cache.interface";
-import { CACHE_MODULE_OPTIONS } from "./constants";
 /**
  * Access to cache manager and dependency
  *
@@ -14,8 +12,6 @@ export class CacheService {
   constructor(
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: CacheManager,
-    @Inject(CACHE_MODULE_OPTIONS)
-    private readonly options: CacheModuleOptions,
   ) {
     patchMoreCommands(this.cacheManager);
   }
