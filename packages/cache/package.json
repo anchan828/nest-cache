@@ -37,13 +37,13 @@
     "@anchan828/nest-cache-manager-async-local-storage": "^2.0.36",
     "@anchan828/nest-cache-manager-ioredis": "^2.0.36",
     "@anchan828/nest-cache-manager-memory": "^2.0.36",
-    "@nestjs/cache-manager": "^2.0.1",
+    "@nestjs/cache-manager": "^2.1.0",
     "@nestjs/common": "^10.0.5",
     "@nestjs/config": "^3.0.0",
     "rxjs": "^7.8.1"
   },
   "peerDependencies": {
-    "@nestjs/cache-manager": "^2.0.1"
+    "@nestjs/cache-manager": "^2.1.0"
   },
   "volta": {
     "extends": "../../package.json"
