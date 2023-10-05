@@ -38,8 +38,8 @@
     "@anchan828/nest-cache-manager-ioredis": "2.0.47",
     "@anchan828/nest-cache-manager-memory": "2.0.47",
     "@nestjs/cache-manager": "2.1.0",
-    "@nestjs/common": "10.2.6",
-    "@nestjs/config": "3.1.1",
+    "@nestjs/common": "8.4.7",
+    "@nestjs/config": "2.3.4",
     "rxjs": "7.8.1"
   },
   "peerDependencies": {
