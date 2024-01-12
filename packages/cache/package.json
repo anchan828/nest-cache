@@ -37,8 +37,8 @@
     "@anchan828/nest-cache-manager-async-local-storage": "^2.0.58",
     "@anchan828/nest-cache-manager-ioredis": "^2.0.58",
     "@anchan828/nest-cache-manager-memory": "^2.0.58",
-    "@nestjs/cache-manager": "2.1.1",
-    "@nestjs/common": "10.2.10",
+    "@nestjs/cache-manager": "2.2.0",
+    "@nestjs/common": "10.3.0",
     "@nestjs/config": "3.1.1",
     "rxjs": "7.8.1"
   },
