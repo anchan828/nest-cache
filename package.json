@@ -32,8 +32,8 @@
   "devDependencies": {
     "@commitlint/cli": "18.4.4",
     "@commitlint/config-conventional": "18.4.4",
-    "@lerna-lite/cli": "3.2.0",
-    "@lerna-lite/publish": "3.2.0",
+    "@lerna-lite/cli": "3.2.1",
+    "@lerna-lite/publish": "3.2.1",
     "@nestjs/cache-manager": "2.2.0",
     "@nestjs/common": "10.3.0",
     "@nestjs/core": "10.3.0",
