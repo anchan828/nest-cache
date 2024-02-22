@@ -41,7 +41,7 @@
     "@nestjs/testing": "10.3.3",
     "@types/jest": "29.5.12",
     "@types/lru-cache": "7.10.9",
-    "@types/node": "20.11.19",
+    "@types/node": "20.11.20",
     "@types/supertest": "6.0.2",
     "@typescript-eslint/eslint-plugin": "6.21.0",
     "@typescript-eslint/parser": "6.21.0",
