@@ -1,6 +1,6 @@
 {
   "name": "@anchan828/nest-cache-manager-memory",
-  "version": "2.0.64",
+  "version": "2.0.65",
   "description": "",
   "homepage": "https://github.com/anchan828/nest-cache#readme",
   "bugs": {
@@ -28,7 +28,7 @@
     "watch": "tsc --watch"
   },
   "dependencies": {
-    "@anchan828/nest-cache-common": "^2.0.64",
+    "@anchan828/nest-cache-common": "^2.0.65",
     "cache-manager": "^5.2.3"
   },
   "volta": {
