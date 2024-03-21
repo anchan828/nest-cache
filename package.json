@@ -40,8 +40,8 @@
     "@nestjs/platform-express": "10.3.4",
     "@nestjs/testing": "10.3.4",
     "@types/jest": "29.5.12",
-    "@types/lru-cache": "7.10.9",
-    "@types/node": "20.11.29",
+    "@types/lru-cache": "7.10.10",
+    "@types/node": "20.11.30",
     "@types/supertest": "6.0.2",
     "@typescript-eslint/eslint-plugin": "6.21.0",
     "@typescript-eslint/parser": "6.21.0",
@@ -59,8 +59,8 @@
     "supertest": "6.3.4",
     "ts-jest": "29.1.2",
     "ts-node": "10.9.2",
-    "turbo": "1.12.5",
-    "typescript": "5.4.2",
+    "turbo": "1.13.0",
+    "typescript": "5.4.3",
     "ulid": "2.3.0"
   },
   "volta": {
