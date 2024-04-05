@@ -39,7 +39,7 @@
     "@anchan828/nest-cache-manager-memory": "^2.0.70",
     "@nestjs/cache-manager": "2.2.2",
     "@nestjs/common": "10.3.7",
-    "@nestjs/config": "3.2.1",
+    "@nestjs/config": "3.2.2",
     "rxjs": "7.8.1"
   },
   "peerDependencies": {
