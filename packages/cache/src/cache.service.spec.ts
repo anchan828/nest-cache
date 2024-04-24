@@ -25,6 +25,7 @@ function getCacheStore(storeName: string, port?: number): Promise<Cache<any>> {
       );
     case "redis":
     case "redis(dragonfly)":
+    case "redis(valkey)":
       return caching(
         new RedisStore({
           ttl: 5,
@@ -39,13 +40,14 @@ function getCacheStore(storeName: string, port?: number): Promise<Cache<any>> {
   throw new Error(`Not found cache store: ${storeName}`);
 }
 
-type StoreName = "memory(default)" | "memory" | "redis" | "redis(dragonfly)" | "async-local-storage";
+type StoreName = "memory(default)" | "memory" | "redis" | "redis(dragonfly)" | "redis(valkey)" | "async-local-storage";
 
 describe.each([
   { storeName: "memory(default)" },
   { storeName: "memory" },
   { storeName: "redis", port: 6379 },
   { storeName: "redis(dragonfly)", port: 6380 },
+  { storeName: "redis(valkey)", port: 6381 },
   { storeName: "async-local-storage" },
 ] as { storeName: StoreName; port?: number }[])("store: $storeName", ({ storeName, port }) => {
   let service: CacheService;

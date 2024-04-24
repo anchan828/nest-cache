@@ -3,7 +3,6 @@ version: "3.4"
 services:
   redis:
     image: redis:7.2.4-alpine
-    command: redis-server --lazyfree-lazy-user-del yes
     ports:
       - "6379:6379"
 
@@ -11,5 +10,8 @@ services:
     image: docker.dragonflydb.io/dragonflydb/dragonfly
     ports:
       - "6380:6379"
-    ulimits:
-      memlock: -1
+
+  valkey:
+    image: valkey/valkey:7.2.5-alpine
+    ports:
+      - "6381:6379"
