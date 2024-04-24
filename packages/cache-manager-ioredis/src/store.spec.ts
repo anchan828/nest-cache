@@ -11,6 +11,7 @@ describe.each([
     client: new (require("ioredis-mock"))(),
   },
   { name: "dragonfly", client: new Redis({ db: 1, port: 6380, host: process.env.REDIS_HOST || "localhost" }) },
+  { name: "valkey", client: new Redis({ db: 1, port: 6381, host: process.env.REDIS_HOST || "localhost" }) },
 ])("RedisStore: $name", ({ client }) => {
   let asyncLocalStorage: AsyncLocalStorage<Map<string, any>>;
   let asyncLocalStorageService: AsyncLocalStorageService;
