@@ -112,6 +112,18 @@ class TestCacheMiddleware implements ICacheMiddleware {
   // hgetall?(context: CacheContext<"hgetall">): Promise<void>;
   // hkeys?(context: CacheContext<"hkeys">): Promise<void>;
 }
+
+@Module({
+  imports: [CacheModule.register()],
+  prividers: [
+    /**
+     * Register middleware
+     */
+    TestCacheMiddleware,
+    ExampleService,
+  ],
+})
+export class AppModule {}
 ```
 
 ## Using In-memory
