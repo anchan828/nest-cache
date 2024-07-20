@@ -2,10 +2,12 @@ import { AsyncLocalStorageStore } from "@anchan828/nest-cache-manager-async-loca
 import { RedisStore } from "@anchan828/nest-cache-manager-ioredis";
 import { MemoryStore } from "@anchan828/nest-cache-manager-memory";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { DiscoveryModule } from "@nestjs/core";
 import { Test } from "@nestjs/testing";
 import { AsyncLocalStorage } from "async_hooks";
 import { Cache, caching } from "cache-manager";
 import { setTimeout } from "timers/promises";
+import { CacheMiddlewareService } from "./cache.middleware";
 import { CacheService } from "./cache.service";
 import { CACHE_MODULE_OPTIONS } from "./constants";
 
@@ -53,8 +55,10 @@ describe.each([
   let service: CacheService;
   beforeEach(async () => {
     const app = await Test.createTestingModule({
+      imports: [DiscoveryModule],
       providers: [
         CacheService,
+        CacheMiddlewareService,
         {
           provide: CACHE_MANAGER,
           useFactory: async () => {
@@ -142,10 +146,7 @@ describe.each([
 
   describe("mget", () => {
     it("should get caches", async () => {
-      await expect(service.mget()).resolves.toEqual({});
-      await expect(service.mget([])).resolves.toEqual({});
-
-      await expect(service.mget("key1")).resolves.toEqual({
+      await expect(service.mget(["key1"])).resolves.toEqual({
         key1: undefined,
       });
       await expect(service.mget(["key1", "key2"])).resolves.toEqual({
@@ -154,7 +155,7 @@ describe.each([
       });
 
       await service.set("key1", "value1");
-      await expect(service.mget("key1")).resolves.toEqual({
+      await expect(service.mget(["key1"])).resolves.toEqual({
         key1: "value1",
       });
       await expect(service.mget(["key1", "key2"])).resolves.toEqual({
@@ -184,7 +185,7 @@ describe.each([
 
   describe("mdel", () => {
     it("should delete caches", async () => {
-      await expect(service.mdel()).resolves.toBeUndefined();
+      await expect(service.mdel([])).resolves.toBeUndefined();
       await expect(
         service.mset({
           key1: "value1",
@@ -197,7 +198,7 @@ describe.each([
         key2: "value2",
       });
 
-      await expect(service.mdel("key1")).resolves.toBeUndefined();
+      await expect(service.mdel(["key1"])).resolves.toBeUndefined();
 
       await expect(service.mget(["key1", "key2"])).resolves.toEqual({
         key1: undefined,
@@ -236,13 +237,13 @@ describe.each([
 
     describe("hdel", () => {
       it("should not call hdel", async () => {
-        await expect(service.hdel("key")).resolves.toBeUndefined();
+        await expect(service.hdel("key", [])).resolves.toBeUndefined();
       });
 
       it("should delete cache", async () => {
         await service.hset("key", "field", "value");
         await expect(service.hget("key", "field")).resolves.toEqual("value");
-        await expect(service.hdel("key", "field")).resolves.toBeUndefined();
+        await expect(service.hdel("key", ["field"])).resolves.toBeUndefined();
         await expect(service.hget("key", "field")).resolves.toBeUndefined();
       });
 
