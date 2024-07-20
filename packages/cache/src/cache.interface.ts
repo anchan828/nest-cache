@@ -8,3 +8,7 @@ export interface CacheModuleOptionsFactory<T = any> {
     | CacheModuleOptions<T>
     | CacheModuleOptions<T>[];
 }
+
+export interface CacheOptions<Source = any> {
+  source?: Source;
+}
