@@ -92,6 +92,10 @@ describe.each([
     expect(service).toBeDefined();
   });
 
+  it("should get client", () => {
+    expect(service.client).toBeDefined();
+  });
+
   describe("get/set/delete", () => {
     it("should be defined", () => {
       expect(service.get).toBeDefined();

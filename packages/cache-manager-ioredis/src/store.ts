@@ -5,7 +5,7 @@ import { pack, unpack } from "msgpackr";
 import { CACHE_STORE_NAME } from "./constants";
 import { RedisStoreArgs } from "./store.interface";
 export class RedisStore implements CacheManager {
-  readonly store: Redis;
+  public readonly store: Redis;
 
   public readonly name: string = CACHE_STORE_NAME;
 

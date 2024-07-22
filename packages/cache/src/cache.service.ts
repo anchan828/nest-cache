@@ -10,13 +10,20 @@ import { CacheMiddlewareService, createCacheContext } from "./cache.middleware";
  * @class CacheService
  */
 @Injectable()
-export class CacheService {
+export class CacheService<T = any> {
   constructor(
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: CacheManager,
     private readonly middlewareService: CacheMiddlewareService,
   ) {
     patchMoreCommands(this.cacheManager);
+  }
+
+  public get client(): T {
+    if ("store" in this.cacheManager.store) {
+      return this.cacheManager.store.store;
+    }
+    return this.cacheManager.store;
   }
 
   /**
