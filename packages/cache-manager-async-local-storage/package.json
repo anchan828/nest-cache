@@ -1,6 +1,6 @@
 {
   "name": "@anchan828/nest-cache-manager-async-local-storage",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "",
   "homepage": "https://github.com/anchan828/nest-cache#readme",
   "bugs": {
@@ -28,7 +28,7 @@
     "watch": "tsc --watch"
   },
   "dependencies": {
-    "@anchan828/nest-cache-common": "^3.1.0",
+    "@anchan828/nest-cache-common": "^3.1.1",
     "cache-manager": "^5.2.3"
   },
   "volta": {
