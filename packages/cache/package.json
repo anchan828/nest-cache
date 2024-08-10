@@ -21,7 +21,7 @@
     "build": "tsc -p tsconfig.build.json",
     "copy:license": "cp ../../LICENSE ./",
     "copy:readme": "cp ../../README.md ./",
-    "lint": "TIMING=1 eslint --ignore-path ../../.eslintignore '**/*.ts'",
+    "lint": "TIMING=1 eslint '**/*.ts'",
     "lint:fix": "npm run lint -- --fix",
     "prepublishOnly": "npm run copy:license && npm run copy:readme",
     "test": "jest --coverage --runInBand",
