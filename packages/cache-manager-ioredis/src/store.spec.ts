@@ -7,7 +7,7 @@ describe.each([
   { name: "ioredis", client: new Redis({ db: 1, port: 6379, host: process.env.REDIS_HOST || "localhost" }) },
   {
     name: "ioredis-mock",
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     client: new (require("ioredis-mock"))(),
   },
   { name: "dragonfly", client: new Redis({ db: 1, port: 6380, host: process.env.REDIS_HOST || "localhost" }) },
