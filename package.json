@@ -34,7 +34,7 @@
     "@commitlint/config-conventional": "19.2.2",
     "@eslint/compat": "^1.1.1",
     "@eslint/js": "^9.9.0",
-    "@golevelup/ts-jest": "0.5.3",
+    "@golevelup/ts-jest": "0.5.4",
     "@lerna-lite/cli": "3.8.0",
     "@lerna-lite/publish": "3.8.0",
     "@nestjs/cache-manager": "2.2.2",
