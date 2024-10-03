@@ -10,6 +10,6 @@ services:
       - "6380:6379"
 
   valkey:
-    image: valkey/valkey:7.2.6-alpine
+    image: valkey/valkey:7.2.7-alpine
     ports:
       - "6381:6379"
