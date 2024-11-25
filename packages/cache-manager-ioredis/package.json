@@ -39,7 +39,7 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "packageManager": "npm@10.9.0",
+  "packageManager": "npm@10.9.1",
   "exports": {
     ".": {
       "import": {
