@@ -44,7 +44,7 @@
     "@nestjs/testing": "10.4.9",
     "@types/jest": "29.5.14",
     "@types/lru-cache": "7.10.10",
-    "@types/node": "22.9.3",
+    "@types/node": "22.9.4",
     "@types/supertest": "6.0.2",
     "cache-manager": "5.7.6",
     "eslint": "9.15.0",
