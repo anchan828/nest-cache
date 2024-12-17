@@ -28,7 +28,7 @@
     "watch": "tsc --watch"
   },
   "devDependencies": {
-    "cache-manager": "5.7.6"
+    "cache-manager": "6.3.1"
   },
   "volta": {
     "extends": "../../package.json"
